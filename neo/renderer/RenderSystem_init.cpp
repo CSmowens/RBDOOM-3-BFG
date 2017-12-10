@@ -920,6 +920,9 @@ void R_InitOpenGL()
 	// Reset our gamma
 	R_SetColorMappings();
 	
+	// foresthale 2014-02-19: init the view framebuffer object
+	globalFramebuffers2->InitIntrinsics();
+
 	// RB begin
 #if defined(_WIN32)
 	static bool glCheck = false;
@@ -2790,11 +2793,9 @@ void idRenderSystemLocal::Init()
 	guiModel = new( TAG_RENDER ) idGuiModel;
 	guiModel->Clear();
 	tr_guiModel = guiModel;	// for DeviceContext fast path
-
-	UpdateStereo3DMode();
-
-	globalImages->Init();
 	
+	globalImages->Init();
+	globalFramebuffers2->Init(); // foresthale 2014-02-18: framebuffer objects
 	// RB begin
 	Framebuffer::Init();
 	// RB end
@@ -2829,7 +2830,12 @@ void idRenderSystemLocal::Init()
 		testImageTriangles = R_MakeTestImageTriangles();
 	}
 	
-	frontEndJobList = parallelJobManager->AllocJobList( JOBLIST_RENDERER_FRONTEND, JOBLIST_PRIORITY_MEDIUM, 2048, 0, NULL );
+	// foresthale 2014-05-28: due to increased MAX_INTERACTIONS_PER_LIGHT the job limit also has to be increased
+#ifdef ID_ALLOW_TOOLS
+	frontEndJobList = parallelJobManager->AllocJobList(JOBLIST_RENDERER_FRONTEND, JOBLIST_PRIORITY_MEDIUM, 16384, 0, NULL);
+#else
+	frontEndJobList = parallelJobManager->AllocJobList(JOBLIST_RENDERER_FRONTEND, JOBLIST_PRIORITY_MEDIUM, 2048, 0, NULL);
+#endif
 	
 	// make sure the command buffers are ready to accept the first screen update
 	SwapCommandBuffers( NULL, NULL, NULL, NULL );
@@ -2852,6 +2858,7 @@ void idRenderSystemLocal::Shutdown()
 	if( R_IsInitialized() )
 	{
 		globalImages->PurgeAllImages();
+		globalFramebuffers2->PurgeAllFramebuffers(); // foresthale 2014-02-18: framebuffer objects
 	}
 	
 	renderModelManager->Shutdown();
@@ -2859,7 +2866,8 @@ void idRenderSystemLocal::Shutdown()
 	idCinematic::ShutdownCinematic();
 	
 	globalImages->Shutdown();
-	
+	globalFramebuffers2->Shutdown(); // foresthale 2014-02-18: framebuffer objects
+
 	// RB begin
 	Framebuffer::Shutdown();
 	// RB end
@@ -3154,23 +3162,6 @@ idRenderSystemLocal::HasQuadBufferSupport
 bool idRenderSystemLocal::HasQuadBufferSupport() const
 {
 	return glConfig.stereoPixelFormatAvailable;
-}
-
-/*
-========================
-idRenderSystemLocal::UpdateStereo3DMode
-========================
-*/
-void idRenderSystemLocal::UpdateStereo3DMode()
-{
-	if( glConfig.nativeScreenWidth == 1280 && glConfig.nativeScreenHeight == 1470 )
-	{
-		glConfig.stereo3Dmode = STEREO3D_HDMI_720;
-	}
-	else
-	{
-		glConfig.stereo3Dmode = GetStereoScopicRenderingMode();
-	}
 }
 
 /*

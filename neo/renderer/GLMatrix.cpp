@@ -362,10 +362,14 @@ void R_SetupViewMatrix( viewDef_t* viewDef )
 	viewEntity_t* world = &viewDef->worldSpace;
 	memset( world, 0, sizeof( *world ) );
 	
+	world->modelRenderMatrix.Identity();
+
 	// the model matrix is an identity
 	world->modelMatrix[0 * 4 + 0] = 1.0f;
 	world->modelMatrix[1 * 4 + 1] = 1.0f;
 	world->modelMatrix[2 * 4 + 2] = 1.0f;
+
+	//idRenderMatrix::Transpose(*(idRenderMatrix*)world->modelMatrix, world->modelRenderMatrix);
 	
 	// transform by the camera placement
 	const idVec3& origin = viewDef->renderView.vieworg;
@@ -430,6 +434,8 @@ void R_SetupProjectionMatrix( viewDef_t* viewDef )
 	//
 	const float zNear = ( viewDef->renderView.cramZNear ) ? ( r_znear.GetFloat() * 0.25f ) : r_znear.GetFloat();
 	
+	const float zFar = 2048;
+
 	float ymax = zNear * tan( viewDef->renderView.fov_y * idMath::PI / 360.0f );
 	float ymin = -ymax;
 	
@@ -453,6 +459,8 @@ void R_SetupProjectionMatrix( viewDef_t* viewDef )
 	ymin += jittery * height;
 	ymax += jittery * height;
 	
+	idRenderMatrix::CreateProjectionMatrix(xmin, xmax, ymin, ymax, zNear, zFar, viewDef->projectionRenderMatrix);
+
 	viewDef->projectionMatrix[0 * 4 + 0] = 2.0f * zNear / width;
 	viewDef->projectionMatrix[1 * 4 + 0] = 0.0f;
 	viewDef->projectionMatrix[2 * 4 + 0] = ( xmax + xmin ) / width;	// normally 0

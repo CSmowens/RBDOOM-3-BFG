@@ -64,6 +64,7 @@ public:
 	void			Zero();									// single point at origin
 	
 	idVec3			GetCenter() const;						// returns center of bounds
+	idVec3          Diagonal(void) const;
 	float			GetRadius() const;						// returns the radius relative to the bounds origin
 	float			GetRadius( const idVec3& center ) const;		// returns the radius relative to the given center
 	float			GetVolume() const;						// returns the volume of the bounds
@@ -238,6 +239,10 @@ ID_INLINE void idBounds::Zero()
 ID_INLINE idVec3 idBounds::GetCenter() const
 {
 	return idVec3( ( b[1][0] + b[0][0] ) * 0.5f, ( b[1][1] + b[0][1] ) * 0.5f, ( b[1][2] + b[0][2] ) * 0.5f );
+}
+
+ID_INLINE idVec3 idBounds::Diagonal(void) const {
+	return idVec3(idVec3(b[1][0] - b[0][0]).Length(), idVec3(b[1][1] - b[0][1]).Length(), idVec3(b[1][2] - b[0][2]).Length());
 }
 
 ID_INLINE float idBounds::GetVolume() const

@@ -313,6 +313,8 @@ Sys_InterlockedIncrement
 */
 interlockedInt_t Sys_InterlockedIncrement( interlockedInt_t& value )
 {
+	// googling suggests that some experimental mingw code supports this too..
+	return InterlockedIncrementAcquire(&value);
 	// TODO: SDL_AtomicIncRef
 #ifdef InterlockedIncrementAcquire
 	// googling suggests that some experimental mingw code supports this too..
@@ -329,6 +331,7 @@ Sys_InterlockedDecrement
 */
 interlockedInt_t Sys_InterlockedDecrement( interlockedInt_t& value )
 {
+	return InterlockedDecrementRelease(&value);
 	// TODO: SDL_AtomicDecRef
 #ifdef InterlockedDecrementRelease
 	return InterlockedDecrementRelease( & value );

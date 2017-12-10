@@ -244,7 +244,7 @@ idImage* idMaterial::GetEditorImage() const
 	else
 	{
 		// look for an explicit one
-		editorImage = globalImages->ImageFromFile( editorImageName, TF_DEFAULT, TR_REPEAT, TD_DEFAULT );
+		editorImage = globalImages->ImageFromFile(editorImageName, TF_DEFAULT, TR_REPEAT, TD_EDITOR_DEFAULT);
 	}
 	
 	if( !editorImage )
@@ -1275,9 +1275,12 @@ void idMaterial::ParseFragmentMap( idLexer& src, newShaderStage_t* newStage )
 	}
 	str = R_ParsePastImageProgram( src );
 	
+	// foresthale 2014-05-17: don't binarize when in the editors - we just run uncompressed from the source assets
+	td = CheckEditorUsage(td);
+
 	newStage->fragmentProgramImages[unit] =
-		globalImages->ImageFromFile( str, tf, trp, td, cubeMap );
-	if( !newStage->fragmentProgramImages[unit] )
+		globalImages->ImageFromFile(str, tf, trp, td, cubeMap);
+	if (!newStage->fragmentProgramImages[unit])
 	{
 		newStage->fragmentProgramImages[unit] = globalImages->defaultImage;
 	}
@@ -1920,33 +1923,37 @@ void idMaterial::ParseStage( idLexer& src, const textureRepeat_t trpDefault )
 		textureStage_t* coverageTS = &newCoverageStage->texture;
 		
 		// now load the image with all the parms we parsed for the coverage stage
-		if( imageName[0] )
+		if (imageName[0])
 		{
-			coverageTS->image = globalImages->ImageFromFile( imageName, tf, trp, TD_COVERAGE, cubeMap );
-			if( !coverageTS->image )
+			// foresthale 2014-05-17: don't binarize when in the editors - we just run uncompressed from the source assets
+			coverageTS->image = globalImages->ImageFromFile(imageName, tf, trp, CheckEditorUsage(TD_COVERAGE), cubeMap);
+			if (!coverageTS->image)
 			{
 				coverageTS->image = globalImages->defaultImage;
 			}
 		}
-		else if( !coverageTS->cinematic && !coverageTS->dynamic && !ss->newStage )
+		else if (!coverageTS->cinematic && !coverageTS->dynamic && !ss->newStage)
 		{
-			common->Warning( "material '%s' had stage with no image", GetName() );
+			common->Warning("material '%s' had stage with no image", GetName());
 			coverageTS->image = globalImages->defaultImage;
 		}
 	}
-	
+
+	// foresthale 2014-05-17: don't binarize when in the editors - we just run uncompressed from the source assets
+	td = CheckEditorUsage(td);
+
 	// now load the image with all the parms we parsed
-	if( imageName[0] )
+	if (imageName[0])
 	{
-		ts->image = globalImages->ImageFromFile( imageName, tf, trp, td, cubeMap );
-		if( !ts->image )
+		ts->image = globalImages->ImageFromFile(imageName, tf, trp, td, cubeMap);
+		if (!ts->image)
 		{
 			ts->image = globalImages->defaultImage;
 		}
 	}
-	else if( !ts->cinematic && !ts->dynamic && !ss->newStage )
+	else if (!ts->cinematic && !ts->dynamic && !ss->newStage)
 	{
-		common->Warning( "material '%s' had stage with no image", GetName() );
+		common->Warning("material '%s' had stage with no image", GetName());
 		ts->image = globalImages->defaultImage;
 	}
 }
@@ -3328,6 +3335,46 @@ const shaderStage_t* idMaterial::GetBumpStage() const
 	}
 	return NULL;
 }
+
+/*
+===================
+idMaterial::SurfaceCastsSoftShadow
+===================
+*/
+bool idMaterial::SurfaceCastsShadow() const {
+
+	if (TestMaterialFlag(MF_FORCESHADOWS)) {
+		return true;
+	}
+
+	if (coverage == MC_TRANSLUCENT) {
+		return false;
+	}
+
+	if (coverage == MC_PERFORATED) {
+
+		//WARNING(johl): this is kind of hacky but is necessary to get the 
+		//               original Doom3 materials to work at a decent perf.
+		//               Decals don't cast a shadow, unfortunately there is no
+		//               flag indicating whether a material is decal or not.
+		//               Decals usually are alpha tested and have the 'noshadows'
+		//               flag set, but 'noshadows' is ignored by fhDOOM on alphatested
+		//               surfaces to enable alphatested shadows.
+		//               Current soltuion: Just assume all materials starting with
+		//               'textures/decals/' are decals and dont cast a shadows.
+		static const char* const decalsPrefix = "textures/decals/";
+		static const int decalsPrefixLen = strlen(decalsPrefix);
+
+		if (cullType != CT_TWO_SIDED && (strncmp(GetName(), decalsPrefix, decalsPrefixLen) == 0)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	return !TestMaterialFlag(MF_NOSHADOWS);
+}
+
 
 /*
 ===================

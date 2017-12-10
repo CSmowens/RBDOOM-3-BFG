@@ -56,6 +56,10 @@ typedef enum
 	TD_LOOKUP_TABLE_RGBA,	// RGBA lookup table
 	TD_COVERAGE,			// coverage map for fill depth pass when YCoCG is used
 	TD_DEPTH,				// depth buffer copy for motion blur
+	TD_EDITOR_DEFAULT,		// foresthale 2014-05-17: uncompressed editor version of TD_DEFAULT (always loads tga, does not write bimage)
+	TD_EDITOR_DIFFUSE,		// foresthale 2014-05-17: uncompressed editor version of TD_DIFFUSE (always loads tga, does not write bimage)
+	TD_EDITOR_BUMP,			// foresthale 2014-05-17: uncompressed editor version of TD_BUMP (always loads tga, does not write bimage)
+	TD_EDITOR_COVERAGE,		// foresthale 2014-05-17: uncompressed editor version of TD_COVERAGE (always loads tga, does not write bimage)
 	// RB begin
 	TD_SHADOW_ARRAY,		// 2D depth buffer array for shadow mapping
 	TD_RGBA16F,
@@ -63,6 +67,16 @@ typedef enum
 	TD_R32F,
 	// RB end
 } textureUsage_t;
+
+inline bool IsToolUsage(textureUsage_t usage)
+{
+	return usage == TD_EDITOR_DEFAULT ||
+		usage == TD_EDITOR_DIFFUSE ||
+		usage == TD_EDITOR_BUMP ||
+		usage == TD_EDITOR_COVERAGE;
+}
+
+textureUsage_t CheckEditorUsage(textureUsage_t usage);
 
 typedef enum
 {
@@ -151,6 +165,11 @@ public:
 		return opts.height;
 	}
 	
+	GLuint		GetTexnum() const
+	{
+		return texnum;
+	}
+
 	void		SetReferencedOutsideLevelLoad()
 	{
 		referencedOutsideLevelLoad = true;

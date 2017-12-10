@@ -153,54 +153,56 @@ ID_INLINE size_t idStrList::Size() const
 /*
 ===============================================================================
 
-	idStrList path sorting
+idStrList path sorting
 
 ===============================================================================
 */
-//
-///*
-//================
-//idListSortComparePaths
-//
-//Compares two pointers to strings. Used to sort a list of string pointers alphabetically in idList<idStr>::Sort.
-//================
-//*/
-//template<class idStrPtr>
-//ID_INLINE int idListSortComparePaths( const idStrPtr *a, const idStrPtr *b ) {
-//	return ( *a )->IcmpPath( **b );
-//}
 
-///*
-//================
-//idStrListSortPaths
-//
-//Sorts the list of path strings alphabetically and makes sure folders come first.
-//================
-//*/
-//ID_INLINE void idStrListSortPaths( idStrList &list ) {
-//	int i;
-//
-//	if ( !list.Num() ) {
-//		return;
-//	}
-//
-//	idList<idStr>		other;
-//	idList<idStrPtr>	pointerList;
-//
-//	pointerList.SetNum( list.Num() );
-//	for( i = 0; i < list.Num(); i++ ) {
-//		pointerList[ i ] = &list[ i ];
-//	}
-//
-//	pointerList.Sort( idListSortComparePaths<idStrPtr> );
-//
-//	other.SetNum( list.Num() );
-//	other.SetGranularity( list.GetGranularity() );
-//	for( i = 0; i < other.Num(); i++ ) {
-//		other[ i ] = *pointerList[ i ];
-//	}
-//
-//	list.Swap( other );
-//}
+/*
+================
+idListSortComparePaths
+
+Compares two pointers to strings. Used to sort a list of string pointers alphabetically in idList<idStr>::Sort.
+================
+*/
+template<class idStrPtr>
+ID_INLINE int idListSortComparePaths(const idStrPtr *a, const idStrPtr *b) {
+	return (*a)->IcmpPath(**b);
+}
+
+/*
+================
+idStrListSortPaths
+
+Sorts the list of path strings alphabetically and makes sure folders come first.
+================
+*/
+
+ID_INLINE void idStrListSortPaths(idStrList &list) {
+	int i;
+
+	if (!list.Num()) {
+		return;
+	}
+
+	idList<idStr>		other;
+	idList<idStrPtr>	pointerList;
+
+	pointerList.SetNum(list.Num());
+	for (i = 0; i < list.Num(); i++) {
+		pointerList[i] = &list[i];
+	}
+
+	pointerList.Sort(idListSortComparePaths<idStrPtr>);
+
+	other.SetNum(list.Num());
+	other.SetGranularity(list.GetGranularity());
+	for (i = 0; i < other.Num(); i++) {
+		other[i] = *pointerList[i];
+	}
+
+	list.Swap(other);
+}
+
 
 #endif /* !__STRLIST_H__ */

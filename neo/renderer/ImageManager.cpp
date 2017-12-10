@@ -500,17 +500,20 @@ idImage*	idImageManager::ImageFromFile( const char* _name, textureFilter_t filte
 	image->levelLoadReferenced = true;
 	
 	// load it if we aren't in a level preload
-	if( !insideLevelLoad || preloadingMapImages )
+	if (!insideLevelLoad || preloadingMapImages)
 	{
-		image->referencedOutsideLevelLoad = ( !insideLevelLoad && !preloadingMapImages );
-		image->ActuallyLoadImage( false );	// load is from front end
-		declManager->MediaPrint( "%ix%i %s\n", image->GetUploadWidth(), image->GetUploadHeight(), image->GetName() );
+		image->referencedOutsideLevelLoad = (!insideLevelLoad && !preloadingMapImages);
+		if (!(com_editors /*& EDITOR_DMAP*/))
+		{
+			image->ActuallyLoadImage(false);	// load is from front end
+		}
+		declManager->MediaPrint("%ix%i %s\n", image->GetUploadWidth(), image->GetUploadHeight(), image->GetName());
 	}
 	else
 	{
-		declManager->MediaPrint( "%s\n", image->GetName() );
+		declManager->MediaPrint("%s\n", image->GetName());
 	}
-	
+
 	return image;
 }
 
@@ -765,7 +768,15 @@ BindNull
 */
 void idImageManager::BindNull()
 {
-	RENDERLOG_PRINTF( "BindNull()\n" );
+	RENDERLOG_PRINTF("BindNull()\n");
+
+	// foresthale 2014-05-10: when using the tools code (which does not use shaders) we have to manage the texture unit enables
+	if (com_editors)
+	{
+		//qglActiveTexture(GL_TEXTURE0_ARB + backEnd.glState.currenttmu);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_CUBE_MAP);
+	}
 	
 }
 
@@ -810,18 +821,22 @@ Frees all images used by the previous level
 void idImageManager::BeginLevelLoad()
 {
 	insideLevelLoad = true;
-	
-	for( int i = 0 ; i < images.Num() ; i++ )
+
+	// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+	if (com_editors)
+		return;
+
+	for (int i = 0; i < images.Num(); i++)
 	{
-		idImage*	image = images[ i ];
-		
+		idImage*	image = images[i];
+
 		// generator function images are always kept around
-		if( image->generatorFunction )
+		if (image->generatorFunction)
 		{
 			continue;
 		}
-		
-		if( !image->referencedOutsideLevelLoad && image->IsLoaded() )
+
+		if (!image->referencedOutsideLevelLoad && image->IsLoaded())
 		{
 			image->PurgeImage();
 			//idLib::Printf( "purging %s\n", image->GetName() );
@@ -830,7 +845,7 @@ void idImageManager::BeginLevelLoad()
 		{
 			//idLib::Printf( "not purging %s\n", image->GetName() );
 		}
-		
+
 		image->levelLoadReferenced = false;
 	}
 }

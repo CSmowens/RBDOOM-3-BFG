@@ -827,8 +827,13 @@ void idPhysics_Base::AddGroundContacts( const idClipModel* clipModel )
 	
 	dir.SubVec3( 0 ) = gravityNormal;
 	dir.SubVec3( 1 ) = vec3_origin;
-	num = gameLocal.clip.Contacts( &contacts[index], 10, clipModel->GetOrigin(),
-								   dir, CONTACT_EPSILON, clipModel, clipModel->GetAxis(), clipMask, self );
+	//num = gameLocal.clip.Contacts( &contacts[index], 10, clipModel->GetOrigin(),
+		//						   dir, CONTACT_EPSILON, clipModel, clipModel->GetAxis(), clipMask, self );
+	
+	// NagaHuntress 08-16-2015: CONTACT_EPSILON * 4 instead of CONTACT_EPSILON. This makes it test a bit furter downwards for gravity based contacts on the ground.
+	num = gameLocal.clip.Contacts(&contacts[index], 10, clipModel->GetOrigin(),
+		dir, CONTACT_EPSILON * 4, clipModel, clipModel->GetAxis(), clipMask, self);
+
 	contacts.SetNum( index + num );
 }
 

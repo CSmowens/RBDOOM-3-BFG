@@ -208,28 +208,38 @@ ResizeInteractionTable
 */
 void idRenderWorldLocal::ResizeInteractionTable()
 {
+	// foresthale 2014-05-10: added a case for when there is no interaction table (this happens in the editor on the first R_AddSingleLight)
+	if (!interactionTable)
+	{
+		interactionTableWidth = entityDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+		interactionTableHeight = lightDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+		const int	size = interactionTableWidth * interactionTableHeight * sizeof(*interactionTable);
+		interactionTable = (idInteraction**)R_ClearedStaticAlloc(size);
+		return;
+	}
+
 	// we overflowed the interaction table, so make it larger
-	common->Printf( "idRenderWorldLocal::ResizeInteractionTable: overflowed interactionTable, resizing\n" );
-	
+	common->Printf("idRenderWorldLocal::ResizeInteractionTable: overflowed interactionTable, resizing\n");
+
 	const int oldInteractionTableWidth = interactionTableWidth;
 	const int oldIinteractionTableHeight = interactionTableHeight;
 	idInteraction** oldInteractionTable = interactionTable;
-	
+
 	// build the interaction table
 	// this will be dynamically resized if the entity / light counts grow too much
-	interactionTableWidth = entityDefs.Num() + 100;
-	interactionTableHeight = lightDefs.Num() + 100;
-	const int	size =  interactionTableWidth * interactionTableHeight * sizeof( *interactionTable );
-	interactionTable = ( idInteraction** )R_ClearedStaticAlloc( size );
-	for( int l = 0; l < oldIinteractionTableHeight; l++ )
+	interactionTableWidth = entityDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+	interactionTableHeight = lightDefs.Num() + 1000; // motorsep 11-27-2014; was 100
+	const int	size = interactionTableWidth * interactionTableHeight * sizeof(*interactionTable);
+	interactionTable = (idInteraction**)R_ClearedStaticAlloc(size);
+	for (int l = 0; l < oldIinteractionTableHeight; l++)
 	{
-		for( int e = 0; e < oldInteractionTableWidth; e++ )
+		for (int e = 0; e < oldInteractionTableWidth; e++)
 		{
-			interactionTable[ l * interactionTableWidth + e ] = oldInteractionTable[ l * oldInteractionTableWidth + e ];
+			interactionTable[l * interactionTableWidth + e] = oldInteractionTable[l * oldInteractionTableWidth + e];
 		}
 	}
-	
-	R_StaticFree( oldInteractionTable );
+
+	R_StaticFree(oldInteractionTable);
 }
 
 /*
@@ -1876,6 +1886,8 @@ We might alternatively choose to do this with an area flow.
 void idRenderWorldLocal::PushFrustumIntoTree_r( idRenderEntityLocal* def, idRenderLightLocal* light,
 		const frustumCorners_t& corners, int nodeNum )
 {
+	tr.viewCount++;
+	
 	if( nodeNum < 0 )
 	{
 		int areaNum = -1 - nodeNum;

@@ -4390,7 +4390,7 @@ void idRenderMatrix::DepthBoundsForShadowBounds( float& min, float& max, const i
 		// convert to window coords
 #if !defined( CLIP_SPACE_D3D )	// the D3D clip space Z is already in the range [0,1]
 		min = min * 0.5f + 0.5f;
-		max = max * 0.5f + 0.5f;
+		max = max * 0.5f + 0.5f; CreateFromOriginAxis
 #endif
 		// clamp to [0, 1] range
 		min = idMath::ClampFloat( 0.0f, 1.0f, min );

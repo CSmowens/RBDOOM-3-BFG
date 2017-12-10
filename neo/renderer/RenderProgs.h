@@ -503,7 +503,7 @@ public:
 		BindShader_Builtin( BUILTIN_DEEP_GBUFFER_RADIOSITY_BLUR_AND_OUTPUT );
 	}
 	
-#if 0
+#if 1
 	void	BindShader_ZCullReconstruct()
 	{
 		BindShader_Builtin( BUILTIN_ZCULL_RECONSTRUCT );

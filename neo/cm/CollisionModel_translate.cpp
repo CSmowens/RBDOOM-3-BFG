@@ -323,12 +323,13 @@ void idCollisionModelManagerLocal::TranslateTrmEdgeThroughPolygon( cm_traceWork_
 			// FIXME: do this normalize when we know the first collision
 			tw->trace.c.normal.Normalize();
 			tw->trace.c.dist = tw->trace.c.normal * start;
-			// make sure the collision plane faces the trace model
-			if( tw->trace.c.normal * trmEdge->start - tw->trace.c.dist < 0.0f )
-			{
+			
+			// NagaHuntress from TheDarkMod 08-15-2015: make sure the collision plane faces the direction of the trace
+			if (tw->trace.c.normal * -tw->dir < 0.0f) {
 				tw->trace.c.normal = -tw->trace.c.normal;
 				tw->trace.c.dist = -tw->trace.c.dist;
 			}
+
 			tw->trace.c.contents = poly->contents;
 			tw->trace.c.material = poly->material;
 			tw->trace.c.type = CONTACT_EDGE;

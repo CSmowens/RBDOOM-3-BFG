@@ -65,17 +65,17 @@ To *Color-Convert RGB and YCoCg* ColorSpaces, use the following conversions:
 idColorSpace::ConvertRGBToYCoCg
 ========================
 */
-void idColorSpace::ConvertRGBToYCoCg( byte* dst, const byte* src, int width, int height )
+void idColorSpace::ConvertRGBToYCoCg(byte* dst, const byte* src, int width, int height)
 {
-	for( int i = 0; i < width * height; i++ )
+	for (int i = 0; i < width * height; i++)
 	{
 		int r = src[i * 4 + 0];
 		int g = src[i * 4 + 1];
 		int b = src[i * 4 + 2];
 		int a = src[i * 4 + 3];
-		dst[i * 4 + 0] = CLAMP_BYTE( RGB_TO_YCOCG_Y( r, g, b ) );
-		dst[i * 4 + 1] = CLAMP_BYTE( RGB_TO_YCOCG_CO( r, g, b ) + 128 );
-		dst[i * 4 + 2] = CLAMP_BYTE( RGB_TO_YCOCG_CG( r, g, b ) + 128 );
+		dst[i * 4 + 0] = CLAMP_BYTE(RGB_TO_YCOCG_Y(r, g, b));
+		dst[i * 4 + 1] = CLAMP_BYTE(RGB_TO_YCOCG_CO(r, g, b) + 128);
+		dst[i * 4 + 2] = CLAMP_BYTE(RGB_TO_YCOCG_CG(r, g, b) + 128);
 		dst[i * 4 + 3] = a;
 	}
 }
@@ -85,17 +85,17 @@ void idColorSpace::ConvertRGBToYCoCg( byte* dst, const byte* src, int width, int
 idColorSpace::ConvertYCoCgToRGB
 ========================
 */
-void idColorSpace::ConvertYCoCgToRGB( byte* dst, const byte* src, int width, int height )
+void idColorSpace::ConvertYCoCgToRGB(byte* dst, const byte* src, int width, int height)
 {
-	for( int i = 0; i < width * height; i++ )
+	for (int i = 0; i < width * height; i++)
 	{
-		int y  = src[i * 4 + 0];
+		int y = src[i * 4 + 0];
 		int co = src[i * 4 + 1] - 128;
 		int cg = src[i * 4 + 2] - 128;
-		int a  = src[i * 4 + 3];
-		dst[i * 4 + 0] = CLAMP_BYTE( y + COCG_TO_R( co, cg ) );
-		dst[i * 4 + 1] = CLAMP_BYTE( y + COCG_TO_G( co, cg ) );
-		dst[i * 4 + 2] = CLAMP_BYTE( y + COCG_TO_B( co, cg ) );
+		int a = src[i * 4 + 3];
+		dst[i * 4 + 0] = CLAMP_BYTE(y + COCG_TO_R(co, cg));
+		dst[i * 4 + 1] = CLAMP_BYTE(y + COCG_TO_G(co, cg));
+		dst[i * 4 + 2] = CLAMP_BYTE(y + COCG_TO_B(co, cg));
 		dst[i * 4 + 3] = a;
 	}
 }
@@ -105,18 +105,39 @@ void idColorSpace::ConvertYCoCgToRGB( byte* dst, const byte* src, int width, int
 idColorSpace::ConvertRGBToCoCg_Y
 ========================
 */
-void idColorSpace::ConvertRGBToCoCg_Y( byte* dst, const byte* src, int width, int height )
+void idColorSpace::ConvertRGBToCoCg_Y_GIMPDDS(byte* dst, const byte* src, int width, int height)
 {
-	for( int i = 0; i < width * height; i++ )
+	for (int i = 0; i < width * height; i++)
 	{
 		int r = src[i * 4 + 0];
 		int g = src[i * 4 + 1];
 		int b = src[i * 4 + 2];
 		//int a = src[i*4+3];
-		dst[i * 4 + 0] = CLAMP_BYTE( RGB_TO_YCOCG_CO( r, g, b ) + 128 );
-		dst[i * 4 + 1] = CLAMP_BYTE( RGB_TO_YCOCG_CG( r, g, b ) + 128 );
+		// HQ uses gimp-dds swizzling
+		dst[i * 4 + 0] = 0;
+		dst[i * 4 + 1] = CLAMP_BYTE(RGB_TO_YCOCG_CG(r, g, b) + 128);
+		dst[i * 4 + 2] = CLAMP_BYTE(RGB_TO_YCOCG_CO(r, g, b) + 128);
+		dst[i * 4 + 3] = CLAMP_BYTE(RGB_TO_YCOCG_Y(r, g, b));
+	}
+}
+
+/*
+========================
+idColorSpace::ConvertRGBToCoCg_Y
+========================
+*/
+void idColorSpace::ConvertRGBToCoCg_Y_BFGDDS(byte* dst, const byte* src, int width, int height)
+{
+	for (int i = 0; i < width * height; i++)
+	{
+		int r = src[i * 4 + 0];
+		int g = src[i * 4 + 1];
+		int b = src[i * 4 + 2];
+		//int a = src[i*4+3];
+		dst[i * 4 + 0] = CLAMP_BYTE(RGB_TO_YCOCG_CO(r, g, b) + 128);
+		dst[i * 4 + 1] = CLAMP_BYTE(RGB_TO_YCOCG_CG(r, g, b) + 128);
 		dst[i * 4 + 2] = 0;
-		dst[i * 4 + 3] = CLAMP_BYTE( RGB_TO_YCOCG_Y( r, g, b ) );
+		dst[i * 4 + 3] = CLAMP_BYTE(RGB_TO_YCOCG_Y(r, g, b));
 	}
 }
 
@@ -125,17 +146,40 @@ void idColorSpace::ConvertRGBToCoCg_Y( byte* dst, const byte* src, int width, in
 idColorSpace::ConvertCoCg_YToRGB
 ========================
 */
-void idColorSpace::ConvertCoCg_YToRGB( byte* dst, const byte* src, int width, int height )
+void idColorSpace::ConvertCoCg_YToRGB_GIMPDDS(byte* dst, const byte* src, int width, int height)
 {
-	for( int i = 0; i < width * height; i++ )
+	for (int i = 0; i < width * height; i++)
 	{
-		int co = src[i * 4 + 0] - 128;
-		int cg = src[i * 4 + 1] - 128;
-		int a  = src[i * 4 + 2];
-		int y  = src[i * 4 + 3];
-		dst[i * 4 + 0] = CLAMP_BYTE( y + COCG_TO_R( co, cg ) );
-		dst[i * 4 + 1] = CLAMP_BYTE( y + COCG_TO_G( co, cg ) );
-		dst[i * 4 + 2] = CLAMP_BYTE( y + COCG_TO_B( co, cg ) );
+		int y, co, cg, a;
+		// HQ uses gimp-dds swizzling
+		a = src[i * 4 + 0];
+		cg = src[i * 4 + 1] - 128;
+		co = src[i * 4 + 2] - 128;
+		y = src[i * 4 + 3];
+		dst[i * 4 + 0] = CLAMP_BYTE(y + COCG_TO_R(co, cg));
+		dst[i * 4 + 1] = CLAMP_BYTE(y + COCG_TO_G(co, cg));
+		dst[i * 4 + 2] = CLAMP_BYTE(y + COCG_TO_B(co, cg));
+		dst[i * 4 + 3] = a;
+	}
+}
+
+/*
+========================
+idColorSpace::ConvertCoCg_YToRGB
+========================
+*/
+void idColorSpace::ConvertCoCg_YToRGB_BFGDDS(byte* dst, const byte* src, int width, int height)
+{
+	for (int i = 0; i < width * height; i++)
+	{
+		int y, co, cg, a;
+		co = src[i * 4 + 0] - 128;
+		cg = src[i * 4 + 1] - 128;
+		a = src[i * 4 + 2];
+		y = src[i * 4 + 3];
+		dst[i * 4 + 0] = CLAMP_BYTE(y + COCG_TO_R(co, cg));
+		dst[i * 4 + 1] = CLAMP_BYTE(y + COCG_TO_G(co, cg));
+		dst[i * 4 + 2] = CLAMP_BYTE(y + COCG_TO_B(co, cg));
 		dst[i * 4 + 3] = a;
 	}
 }

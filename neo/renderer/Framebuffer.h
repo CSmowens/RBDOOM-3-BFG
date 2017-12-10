@@ -66,8 +66,19 @@ public:
 	void					AttachImage2D( int target, const idImage* image, int index, int mipmapLod = 0 );
 	void					AttachImage3D( const idImage* image );
 	void					AttachImageDepth( int target, const idImage* image );
+	void					AttachImageDepth(int target, const idImage* image, int i);
 	void					AttachImageDepthLayer( const idImage* image, int layer );
 	
+	// restore the system framebuffer
+	void				BindSystemFramebuffer();
+
+
+	// the system provides an fbo, this is it (on desktop PC this is usually 0)
+	int					sysfbo;
+
+	// on first Bind we get the fbo
+	bool				gotsysfbo;
+
 	// check for OpenGL errors
 	void					Check();
 	uint32_t				GetFramebuffer() const
@@ -127,13 +138,19 @@ struct globalFramebuffers_t
 	Framebuffer*				hdrNonMSAAFBO;
 #endif
 //	Framebuffer*				hdrQuarterFBO;
+	Framebuffer*                editorFBO;
 	Framebuffer*				hdr64FBO;
 	Framebuffer*				bloomRenderFBO[MAX_BLOOM_BUFFERS];
 	Framebuffer*				ambientOcclusionFBO[MAX_SSAO_BUFFERS];
 	Framebuffer*				csDepthFBO[MAX_HIERARCHICAL_ZBUFFERS];
-//	Framebuffer*				geometryBufferFBO;
+	Framebuffer*				geometryBufferFBO;
 	Framebuffer*				smaaEdgesFBO;
 	Framebuffer*				smaaBlendFBO;
+	Framebuffer*                hizFBO;
+	Framebuffer*			    m_diffuseRT; // The diffuse render target
+	Framebuffer*			    m_positionRT; // The position render target
+	Framebuffer*		     	m_normalsRT; // The normals render target
+
 };
 extern globalFramebuffers_t globalFramebuffers;
 

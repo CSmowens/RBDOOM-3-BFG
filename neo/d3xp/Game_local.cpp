@@ -1805,221 +1805,221 @@ merging the entitydef.  It could be done post-merge, but that would
 avoid the fast pre-cache check associated with each entityDef
 ===================
 */
-void idGameLocal::CacheDictionaryMedia( const idDict* dict )
+void idGameLocal::CacheDictionaryMedia(const idDict* dict)
 {
 	const idKeyValue* kv;
-	
-	kv = dict->MatchPrefix( "model" );
-	while( kv )
+
+	kv = dict->MatchPrefix("model");
+	while (kv)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->MediaPrint( "Precaching model %s\n", kv->GetValue().c_str() );
+			declManager->MediaPrint("Precaching model %s\n", kv->GetValue().c_str());
 			// precache model/animations
-			if( declManager->FindType( DECL_MODELDEF, kv->GetValue(), false ) == NULL )
+			if (declManager->FindType(DECL_MODELDEF, kv->GetValue(), false) == NULL)
 			{
 				// precache the render model
-				renderModelManager->FindModel( kv->GetValue() );
+				renderModelManager->FindModel(kv->GetValue());
 				// precache .cm files only
-				collisionModelManager->LoadModel( kv->GetValue() );
+				collisionModelManager->LoadModel(kv->GetValue());
 			}
 		}
-		kv = dict->MatchPrefix( "model", kv );
+		kv = dict->MatchPrefix("model", kv);
 	}
-	
-	kv = dict->FindKey( "s_shader" );
-	if( kv != NULL && kv->GetValue().Length() )
+
+	kv = dict->FindKey("s_shader");
+	if (kv != NULL && kv->GetValue().Length())
 	{
-		declManager->FindType( DECL_SOUND, kv->GetValue() );
+		declManager->FindType(DECL_SOUND, kv->GetValue());
 	}
-	
-	kv = dict->MatchPrefix( "snd", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("snd", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_SOUND, kv->GetValue() );
+			declManager->FindType(DECL_SOUND, kv->GetValue());
 		}
-		kv = dict->MatchPrefix( "snd", kv );
+		kv = dict->MatchPrefix("snd", kv);
 	}
-	
-	
-	kv = dict->MatchPrefix( "gui", NULL );
-	while( kv )
+
+
+	kv = dict->MatchPrefix("gui", NULL);
+	while (kv)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			if( !idStr::Icmp( kv->GetKey(), "gui_noninteractive" )
-					|| !idStr::Icmpn( kv->GetKey(), "gui_parm", 8 )
-					|| !idStr::Icmp( kv->GetKey(), "gui_inventory" ) )
+			if (!idStr::Icmp(kv->GetKey(), "gui_noninteractive")
+				|| !idStr::Icmpn(kv->GetKey(), "gui_parm", 8)
+				|| !idStr::Icmp(kv->GetKey(), "gui_inventory"))
 			{
 				// unfortunate flag names, they aren't actually a gui
 			}
-			else
+			else if (!(com_editors & EDITOR_RADIANT)) // foresthale 2014-05-28: don't precache gui in radiant, the DeAlloc seems to leave a dangling pointer which crashes later in R_RenderGuiSurf
 			{
-				declManager->MediaPrint( "Precaching gui %s\n", kv->GetValue().c_str() );
+				declManager->MediaPrint("Precaching gui %s\n", kv->GetValue().c_str());
 				idUserInterface* gui = uiManager->Alloc();
-				if( gui )
+				if (gui)
 				{
-					gui->InitFromFile( kv->GetValue() );
-					uiManager->DeAlloc( gui );
+					gui->InitFromFile(kv->GetValue());
+					uiManager->DeAlloc(gui);
 				}
 			}
 		}
-		kv = dict->MatchPrefix( "gui", kv );
+		kv = dict->MatchPrefix("gui", kv);
 	}
-	
-	kv = dict->FindKey( "texture" );
-	if( kv != NULL && kv->GetValue().Length() )
+
+	kv = dict->FindKey("texture");
+	if (kv != NULL && kv->GetValue().Length())
 	{
-		declManager->FindType( DECL_MATERIAL, kv->GetValue() );
+		declManager->FindType(DECL_MATERIAL, kv->GetValue());
 	}
-	
-	kv = dict->MatchPrefix( "mtr", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("mtr", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_MATERIAL, kv->GetValue() );
+			declManager->FindType(DECL_MATERIAL, kv->GetValue());
 		}
-		kv = dict->MatchPrefix( "mtr", kv );
+		kv = dict->MatchPrefix("mtr", kv);
 	}
-	
+
 	// handles hud icons
-	kv = dict->MatchPrefix( "inv_icon", NULL );
-	while( kv != NULL )
+	kv = dict->MatchPrefix("inv_icon", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_MATERIAL, kv->GetValue() );
+			declManager->FindType(DECL_MATERIAL, kv->GetValue());
 		}
-		kv = dict->MatchPrefix( "inv_icon", kv );
+		kv = dict->MatchPrefix("inv_icon", kv);
 	}
-	
+
 	// handles teleport fx.. this is not ideal but the actual decision on which fx to use
 	// is handled by script code based on the teleport number
-	kv = dict->MatchPrefix( "teleport", NULL );
-	if( kv != NULL && kv->GetValue().Length() )
+	kv = dict->MatchPrefix("teleport", NULL);
+	if (kv != NULL && kv->GetValue().Length())
 	{
-		int teleportType = atoi( kv->GetValue() );
-		const char* p = ( teleportType ) ? va( "fx/teleporter%i.fx", teleportType ) : "fx/teleporter.fx";
-		declManager->FindType( DECL_FX, p );
+		int teleportType = atoi(kv->GetValue());
+		const char* p = (teleportType) ? va("fx/teleporter%i.fx", teleportType) : "fx/teleporter.fx";
+		declManager->FindType(DECL_FX, p);
 	}
-	
-	kv = dict->MatchPrefix( "fx", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("fx", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->MediaPrint( "Precaching fx %s\n", kv->GetValue().c_str() );
-			declManager->FindType( DECL_FX, kv->GetValue() );
+			declManager->MediaPrint("Precaching fx %s\n", kv->GetValue().c_str());
+			declManager->FindType(DECL_FX, kv->GetValue());
 		}
-		kv = dict->MatchPrefix( "fx", kv );
+		kv = dict->MatchPrefix("fx", kv);
 	}
-	
-	kv = dict->MatchPrefix( "smoke", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("smoke", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
 			idStr prtName = kv->GetValue();
-			int dash = prtName.Find( '-' );
-			if( dash > 0 )
+			int dash = prtName.Find('-');
+			if (dash > 0)
 			{
-				prtName = prtName.Left( dash );
+				prtName = prtName.Left(dash);
 			}
-			declManager->FindType( DECL_PARTICLE, prtName );
+			declManager->FindType(DECL_PARTICLE, prtName);
 		}
-		kv = dict->MatchPrefix( "smoke", kv );
+		kv = dict->MatchPrefix("smoke", kv);
 	}
-	
-	kv = dict->MatchPrefix( "skin", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("skin", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->MediaPrint( "Precaching skin %s\n", kv->GetValue().c_str() );
-			declManager->FindType( DECL_SKIN, kv->GetValue() );
+			declManager->MediaPrint("Precaching skin %s\n", kv->GetValue().c_str());
+			declManager->FindType(DECL_SKIN, kv->GetValue());
 		}
-		kv = dict->MatchPrefix( "skin", kv );
+		kv = dict->MatchPrefix("skin", kv);
 	}
-	
-	kv = dict->MatchPrefix( "def", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("def", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			FindEntityDef( kv->GetValue().c_str(), false );
+			FindEntityDef(kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "def", kv );
+		kv = dict->MatchPrefix("def", kv);
 	}
-	
+
 	// Precache all available grabber "catch" damage decls
-	kv = dict->MatchPrefix( "def_damage", NULL );
-	while( kv != NULL )
+	kv = dict->MatchPrefix("def_damage", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			FindEntityDef( kv->GetValue() + "_catch", false );
+			FindEntityDef(kv->GetValue() + "_catch", false);
 		}
-		kv = dict->MatchPrefix( "def_damage", kv );
+		kv = dict->MatchPrefix("def_damage", kv);
 	}
-	
+
 	// Should have been def_monster_damage!!
-	kv = dict->FindKey( "monster_damage" );
-	if( kv != NULL && kv->GetValue().Length() )
+	kv = dict->FindKey("monster_damage");
+	if (kv != NULL && kv->GetValue().Length())
 	{
-		FindEntityDef( kv->GetValue(), false );
+		FindEntityDef(kv->GetValue(), false);
 	}
-	
-	kv = dict->MatchPrefix( "item", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("item", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			FindEntityDefDict( kv->GetValue().c_str(), false );
+			FindEntityDefDict(kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "item", kv );
+		kv = dict->MatchPrefix("item", kv);
 	}
-	
-	kv = dict->MatchPrefix( "pda_name", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("pda_name", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_PDA, kv->GetValue().c_str(), false );
+			declManager->FindType(DECL_PDA, kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "pda_name", kv );
+		kv = dict->MatchPrefix("pda_name", kv);
 	}
-	
-	kv = dict->MatchPrefix( "video", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("video", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_VIDEO, kv->GetValue().c_str(), false );
+			declManager->FindType(DECL_VIDEO, kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "video", kv );
+		kv = dict->MatchPrefix("video", kv);
 	}
-	
-	kv = dict->MatchPrefix( "audio", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("audio", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_AUDIO, kv->GetValue().c_str(), false );
+			declManager->FindType(DECL_AUDIO, kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "audio", kv );
+		kv = dict->MatchPrefix("audio", kv);
 	}
-	
-	kv = dict->MatchPrefix( "email", NULL );
-	while( kv != NULL )
+
+	kv = dict->MatchPrefix("email", NULL);
+	while (kv != NULL)
 	{
-		if( kv->GetValue().Length() )
+		if (kv->GetValue().Length())
 		{
-			declManager->FindType( DECL_EMAIL, kv->GetValue().c_str(), false );
+			declManager->FindType(DECL_EMAIL, kv->GetValue().c_str(), false);
 		}
-		kv = dict->MatchPrefix( "email", kv );
+		kv = dict->MatchPrefix("email", kv);
 	}
 }
 

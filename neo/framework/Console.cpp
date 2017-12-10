@@ -32,6 +32,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "../renderer/ResolutionScale.h"
 #include "Common_local.h"
 
+#ifdef ID_ALLOW_TOOLS
+#include "tools/edit_public.h"
+#endif
+
 #define	CON_TEXTSIZE			0x30000
 #define	NUM_CON_TIMES			4
 #define CONSOLE_FIRSTREPEAT		200
@@ -948,6 +952,14 @@ void idConsoleLocal::Print( const char* txt )
 	int		c, l;
 	int		color;
 	
+#ifdef ID_ALLOW_TOOLS
+	RadiantPrint(txt);
+
+	if (com_editors & EDITOR_MATERIAL) {
+		MaterialEditorPrintConsole(txt);
+	}
+#endif
+
 	if( TOTAL_LINES == 0 )
 	{
 		// not yet initialized

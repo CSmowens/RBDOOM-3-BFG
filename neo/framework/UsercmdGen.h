@@ -67,6 +67,7 @@ const int IMPULSE_13			= 13;			// weap reload
 const int IMPULSE_14			= 14;			// weap next
 const int IMPULSE_15			= 15;			// weap prev
 const int IMPULSE_16			= 16;			// toggle flashlight on/off
+const int IMPULSE_17            = 17;			// use vehicle, doors, etc		##### SR
 const int IMPULSE_18			= 18;			// center view
 const int IMPULSE_19			= 19;			// show PDA/SCORES
 const int IMPULSE_22			= 22;			// spectate

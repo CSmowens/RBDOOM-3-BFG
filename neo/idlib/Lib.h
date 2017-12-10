@@ -247,6 +247,7 @@ public:
 #include "sys/sys_threading.h"
 
 // memory management and arrays
+#include "xrMemory_align.h"
 #include "Heap.h"
 #include "containers/Sort.h"
 #include "containers/List.h"

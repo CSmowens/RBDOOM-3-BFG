@@ -648,23 +648,28 @@ idRenderModelManagerLocal::BeginLevelLoad
 void idRenderModelManagerLocal::BeginLevelLoad()
 {
 	insideLevelLoad = true;
-	
-	for( int i = 0; i < models.Num(); i++ )
+
+	// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+	if (com_editors)
+		return;
+
+	for (int i = 0; i < models.Num(); i++)
 	{
 		idRenderModel* model = models[i];
-		
+
 		// always reload all models
-		if( model->IsReloadable() )
+		if (model->IsReloadable())
 		{
-			R_CheckForEntityDefsUsingModel( model );
+			R_CheckForEntityDefsUsingModel(model);
 			model->PurgeModel();
 		}
-		
-		model->SetLevelLoadReferenced( false );
+
+		model->SetLevelLoadReferenced(false);
 	}
-	
+
 	vertexCache.FreeStaticData();
 }
+
 
 /*
 =================
@@ -747,84 +752,90 @@ idRenderModelManagerLocal::EndLevelLoad
 */
 void idRenderModelManagerLocal::EndLevelLoad()
 {
-	common->Printf( "----- idRenderModelManagerLocal::EndLevelLoad -----\n" );
-	
+	common->Printf("----- idRenderModelManagerLocal::EndLevelLoad -----\n");
+
 	int start = Sys_Milliseconds();
-	
+
 	insideLevelLoad = false;
 	int	purgeCount = 0;
 	int	keepCount = 0;
 	int	loadCount = 0;
-	
+	int modelCount = models.Num();
+	int modelProgress = 1;
 	// purge any models not touched
-	for( int i = 0; i < models.Num(); i++ )
+	for (int i = 0; i < models.Num(); i++)
 	{
 		idRenderModel* model = models[i];
-		
-		if( !model->IsLevelLoadReferenced() && model->IsLoaded() && model->IsReloadable() )
+		modelProgress = 9 + (i * 3) / modelCount;
+		// foresthale 2014-05-28: Brian Harris suggested the editors should never purge assets, because of potential for crashes on improperly refcounted assets
+		if (!model->IsLevelLoadReferenced() && model->IsLoaded() && model->IsReloadable() && !(com_editors))
 		{
-		
-//			common->Printf( "purging %s\n", model->Name() );
+
+			//			common->Printf( "purging %s\n", model->Name() );
 
 			purgeCount++;
-			
-			R_CheckForEntityDefsUsingModel( model );
-			
+
+			R_CheckForEntityDefsUsingModel(model);
+
 			model->PurgeModel();
-			
+
 		}
 		else
 		{
-		
-//			common->Printf( "keeping %s\n", model->Name() );
+
+			//			common->Printf( "keeping %s\n", model->Name() );
 
 			keepCount++;
 		}
-		
 		common->UpdateLevelLoadPacifier();
 	}
-	
+	modelProgress = 1;
 	// load any new ones
-	for( int i = 0; i < models.Num(); i++ )
+	for (int i = 0; i < models.Num(); i++)
 	{
+		modelProgress = 12 + (i * 16) / modelCount;
 		common->UpdateLevelLoadPacifier();
-		
-		
+
+
 		idRenderModel* model = models[i];
-		
-		if( model->IsLevelLoadReferenced() && !model->IsLoaded() && model->IsReloadable() )
+
+		if (model->IsLevelLoadReferenced() && !model->IsLoaded() && model->IsReloadable())
 		{
 			loadCount++;
 			model->LoadModel();
 		}
 	}
-	
+	modelProgress = 1;
 	// create static vertex/index buffers for all models
-	for( int i = 0; i < models.Num(); i++ )
+	for (int i = 0; i < models.Num(); i++)
 	{
+		modelProgress = 28 + (i * 16) / modelCount;
 		common->UpdateLevelLoadPacifier();
-		
-		
+
+
 		idRenderModel* model = models[i];
-		if( model->IsLoaded() )
+		if (model->IsLoaded())
 		{
-			for( int j = 0; j < model->NumSurfaces(); j++ )
+			for (int j = 0; j < model->NumSurfaces(); j++)
 			{
-				R_CreateStaticBuffersForTri( *( model->Surface( j )->geometry ) );
+				R_CreateStaticBuffersForTri(*(model->Surface(j)->geometry));
 			}
 		}
 	}
-	
-	
+
+
 	// _D3XP added this
 	int	end = Sys_Milliseconds();
-	common->Printf( "%5i models purged from previous level, ", purgeCount );
-	common->Printf( "%5i models kept.\n", keepCount );
-	if( loadCount )
+	common->Printf("%5i models purged from previous level, ", purgeCount);
+	common->Printf("%5i models kept.\n", keepCount);
+	if (loadCount)
 	{
-		common->Printf( "%5i new models loaded in %5.1f seconds\n", loadCount, ( end - start ) * 0.001 );
+		common->Printf("%5i new models loaded in %5.1f seconds\n", loadCount, (end - start) * 0.001);
 	}
-	common->Printf( "---------------------------------------------------\n" );
+	else {
+		common->Printf("Finished loading Models in %5.1f seconds\n", (end - start) * 0.001);
+	}
+	common->Printf("---------------------------------------------------\n");
 }
 
 /*

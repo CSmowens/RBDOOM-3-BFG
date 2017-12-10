@@ -165,7 +165,7 @@ void GL_DepthBoundsTest( const float zmin, const float zmax )
 		glDepthBoundsEXT( zmin, zmax );
 	}
 }
-
+//ANON
 /*
 ========================
 GL_StartDepthPass
@@ -173,6 +173,11 @@ GL_StartDepthPass
 */
 void GL_StartDepthPass( const idScreenRect& rect )
 {
+	backEnd.currentScissor = rect;
+	glEnable(GL_DEPTH_TEST);  // We want depth test !
+	glDepthFunc(GL_LESS);     // We want to get the nearest pixels
+	GL_Color(0, 0, 0, 0);     // Disable color, it's useless, we only want depth.
+	glDepthMask(GL_TRUE);     // Ask z writing
 }
 
 /*
@@ -182,6 +187,10 @@ GL_FinishDepthPass
 */
 void GL_FinishDepthPass()
 {
+	glEnable(GL_DEPTH_TEST);  // We still want depth test
+	glDepthFunc(GL_LEQUAL);   // EQUAL should work, too. (Only draw pixels if they are the closest ones)
+	GL_Color(1, 1, 1, 1);     // We want color this time
+	glDepthMask(GL_FALSE);    // Writing the z component is useless now, we already have it
 }
 
 /*
@@ -298,6 +307,9 @@ may touch, including the editor.
 void GL_SetDefaultState()
 {
 	RENDERLOG_PRINTF( "--- GL_SetDefaultState ---\n" );
+	
+	// foresthale 2014-02-23: switch to system framebuffer before we set default state as the qglDrawBuffer(GL_BACK) and qglReadBuffer(GL_BACK) would just cause errors
+	globalFramebuffers2->BindSystemFramebuffer();
 	
 	glClearDepth( 1.0f );
 	

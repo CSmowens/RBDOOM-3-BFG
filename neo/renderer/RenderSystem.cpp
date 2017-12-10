@@ -831,7 +831,14 @@ const emptyCommand_t* idRenderSystemLocal::SwapCommandBuffers_FinishCommandBuffe
 	
 	// possibly change the stereo3D mode
 	// PC
-	UpdateStereo3DMode();
+	if( glConfig.nativeScreenWidth == 1280 && glConfig.nativeScreenHeight == 1470 )
+	{
+		glConfig.stereo3Dmode = STEREO3D_HDMI_720;
+	}
+	else
+	{
+		glConfig.stereo3Dmode = GetStereoScopicRenderingMode();
+	}
 	
 	// prepare the new command buffer
 	guiModel->BeginFrame();
@@ -856,6 +863,15 @@ const emptyCommand_t* idRenderSystemLocal::SwapCommandBuffers_FinishCommandBuffe
 	renderCrops[0].y2 = GetHeight() - 1;
 	currentRenderCrop = 0;
 	
+	// foresthale 2014-05-23: this hack is fairly horrible, but there was no easier way after much research
+	if ((com_editors & EDITOR_GUI) && tr.viewDef)
+	{
+		renderCrops[0].x1 = tr.viewDef->renderView.x;
+		renderCrops[0].y1 = tr.viewDef->renderView.y;
+		renderCrops[0].x2 = tr.viewDef->renderView.x + tr.viewDef->renderView.width;
+		renderCrops[0].y2 = tr.viewDef->renderView.y + tr.viewDef->renderView.height;
+	}
+
 	// this is the ONLY place this is modified
 	frameCount++;
 	
@@ -1172,4 +1188,56 @@ bool idRenderSystemLocal::UploadImage( const char* imageName, const byte* data, 
 	}
 	image->UploadScratch( data, width, height );
 	return true;
+}
+
+// foresthale 2014-05-19: the editor views need some wrapper code to set up a view render and restore state afterward so that the fixed function OpenGL code of the editors keep working
+void idRenderSystemLocal::Editor_SetupState()
+{
+	// make sure we're using fixed function rendering (program = 0)
+	renderProgManager.Unbind();
+	// make sure we're drawing to the system framebuffer (fbo = 0)
+	globalFramebuffers2->BindSystemFramebuffer();
+
+}
+
+void idRenderSystemLocal::Editor_BeginView(int width, int height, int &restoreWidth, int &restoreHeight)
+{
+	// save the attributes so we can restore them later
+	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_POLYGON_BIT | GL_SCISSOR_BIT | GL_STENCIL_BUFFER_BIT | GL_TEXTURE_BIT | GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
+	// change the render size
+	SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	restoreWidth = glConfig.nativeScreenWidth;
+	restoreHeight = glConfig.nativeScreenHeight;
+	glConfig.nativeScreenWidth = width;
+	glConfig.nativeScreenHeight = height;
+	SwapCommandBuffers(NULL, NULL, NULL, NULL); // this is needed for the nativeScreenWidth/Height to take hold
+}
+
+void idRenderSystemLocal::Editor_EndView(int restoreWidth, int restoreHeight)
+{
+	// this should exit right after vsync, with the GPU idle and ready to draw
+	const emptyCommand_t* cmd = SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	// get the GPU busy with new commands
+	RenderCommandBuffers(cmd);
+	// discard anything currently on the list (this triggers SwapBuffers)
+	SwapCommandBuffers(NULL, NULL, NULL, NULL);
+	glConfig.nativeScreenWidth = restoreWidth;
+	glConfig.nativeScreenHeight = restoreHeight;
+	SwapCommandBuffers(NULL, NULL, NULL, NULL); // this is needed for the nativeScreenWidth/Height to take hold
+
+												// now restore state for fixed function editor rendering
+	globalFramebuffers2->BindSystemFramebuffer();
+	//	qglDisable(GL_SCISSOR_TEST);
+	//	qglDisable(GL_DEPTH_TEST);
+	//	qglDisable(GL_BLEND);
+	//	qglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	//	qglDepthMask(GL_TRUE);
+	//	qglBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glPopAttrib();
+	// make sure we're using fixed function rendering
+	renderProgManager.Unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_3D);
+	glDisable(GL_TEXTURE_CUBE_MAP);
 }

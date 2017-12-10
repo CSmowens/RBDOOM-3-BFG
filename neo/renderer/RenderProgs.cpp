@@ -161,7 +161,7 @@ void idRenderProgManager::Init()
 		// RB end
 		{ BUILTIN_STEREO_DEGHOST, "stereoDeGhost.vfp", "", 0, false },
 		{ BUILTIN_STEREO_WARP, "stereoWarp.vfp", "", 0, false },
-//		{ BUILTIN_ZCULL_RECONSTRUCT, "zcullReconstruct.vfp", 0, false },
+		{ BUILTIN_ZCULL_RECONSTRUCT, "zcullReconstruct.vfp", 0, false },
 		{ BUILTIN_BINK, "bink.vfp", "",  0, false },
 		{ BUILTIN_BINK_GUI, "bink_gui.vfp", "", 0, false },
 		{ BUILTIN_STEREO_INTERLACE, "stereoInterlace.vfp", "", 0, false },

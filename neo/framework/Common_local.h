@@ -197,7 +197,10 @@ public:
 	
 	virtual int					ButtonState( int key );
 	virtual int					KeyState( int key );
-	
+	virtual void				InitTool(const toolFlag_t tool, const idDict *dict);
+	virtual void				ActivateTool(bool active);
+	virtual void				WriteFlaggedCVarsToFile(const char *filename, int flags, const char *setCmd);
+
 	virtual idDemoFile* 		ReadDemo()
 	{
 		return readDemo;

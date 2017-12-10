@@ -33,7 +33,7 @@ const int VERTCACHE_VERTEX_MEMORY_PER_FRAME = 31 * 1024 * 1024;
 const int VERTCACHE_JOINT_MEMORY_PER_FRAME = 256 * 1024;
 
 const int VERTCACHE_NUM_FRAMES = 2;
-
+//ANON INCREASE THE STATIC INDEX MEMORT
 // there are a lot more static indexes than vertexes, because interactions are just new
 // index lists that reference existing vertexes
 const int STATIC_INDEX_MEMORY = 31 * 1024 * 1024;

@@ -29,6 +29,33 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __PRECOMPILED_H__
 #define __PRECOMPILED_H__
 
+#ifdef _WIN32
+
+// don't define ID_ALLOW_TOOLS when we don't want tool code in the executable.
+#if !defined( ID_DEDICATED ) && defined(USE_MFC_TOOLS)
+
+#define	ID_ALLOW_TOOLS
+//#define WINVER				0x601
+#ifdef _MSC_VER 
+#pragma warning( disable: 4005 )  /* macro redefinition */
+#endif
+#include <afxwin.h>
+#include <afxcmn.h>
+#include <afxdlgs.h>
+#include <afxext.h>
+
+#ifdef _MSC_VER 
+#pragma warning( default: 4005 )  /* macro redefinition */
+#endif
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// prevent auto literal to string conversion
+#include "../tools/comafx/StdAfx.h"
+
+#endif // ID_DEDICATED
+
+#endif /* _WIN32 */
+//-----------------------------------------------------
+
+
 #include "sys/sys_defines.h"
 #include "sys/sys_builddefines.h"
 #include "sys/sys_includes.h"
@@ -137,6 +164,7 @@ const int MAX_EXPRESSION_REGISTERS = 4096;
 
 // tools
 #include "../tools/compilers/compiler_public.h"
+#include "../tools/edit_public.h"
 
 //-----------------------------------------------------
 

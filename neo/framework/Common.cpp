@@ -47,7 +47,9 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../sys/sys_savegame.h"
 
-
+#ifdef ID_ALLOW_TOOLS
+#include "tools/edit_public.h"
+#endif
 
 #if defined( _DEBUG )
 #define BUILD_DEBUG "-debug"
@@ -101,7 +103,8 @@ int64 com_engineHz_numerator = 100LL * 1000LL;
 int64 com_engineHz_denominator = 100LL * 60LL;
 
 // RB begin
-int com_editors = 0;
+int com_editors;
+bool com_editorActive;		//  true if an editor has focus
 
 #if defined(_WIN32)
 HWND com_hwndMsg = NULL;
@@ -219,6 +222,12 @@ idCommonLocal::Quit
 */
 void idCommonLocal::Quit()
 {
+#ifdef ID_ALLOW_TOOLS
+	if (com_editors & EDITOR_RADIANT) {
+		RadiantInit();
+		return;
+	}
+#endif
 
 	// don't try to shutdown if we are in a recursive error
 	if( !com_errorEntered )
@@ -476,6 +485,72 @@ int	idCommonLocal::KeyState( int key )
 	return usercmdGen->KeyState( key );
 }
 
+//============================================================================
+
+#ifdef ID_ALLOW_TOOLS
+/*
+==================
+Com_Editor_f
+
+we can start the editor dynamically, but we won't ever get back
+==================
+*/
+static void Com_Editor_f(const idCmdArgs &args) {
+	RadiantInit();
+}
+
+
+/*
+=============
+Com_ScriptDebugger_f
+=============
+*/
+static void Com_ScriptDebugger_f(const idCmdArgs &args) {
+#ifdef USE_MFC_TOOLS
+	DebuggerServerInit();
+
+	// Make sure it wasnt on the command line
+	if (!(com_editors & EDITOR_DEBUGGER)) {
+		DebuggerClientInit(NULL);
+	}
+#else
+	common->Printf("Debugger not included in build\n");
+#endif
+}
+
+/*
+=============
+Com_EditGUIs_f
+=============
+*/
+static void Com_EditGUIs_f(const idCmdArgs &args) {
+
+	// motorsep 12-28-2014; safety mechanicsm that ensures AA is off before GUI Editor can be used; eventually we might need a better solution or at least a Dialog window that lets user know about restart
+	// potentially I see having a menu screen with all tools shortcuts there and dialog window popping up if restart or some settings changes are required
+	int antialiasing = cvarSystem->GetCVarInteger("r_multiSamples");
+
+	if (antialiasing != 0) {
+		idStr cmdLine = Sys_GetCmdLine();
+		cmdLine.Append(" +set r_multiSamples 0");
+		Sys_ReLaunch((void*)cmdLine.c_str(), cmdLine.Length());
+		return;
+	}
+
+	GUIEditorInit();
+}
+
+/*
+=============
+Com_MaterialEditor_f
+=============
+*/
+static void Com_MaterialEditor_f(const idCmdArgs &args) {
+	// Turn off sounds
+	soundSystem->SetMute(true);
+	MaterialEditorInit();
+}
+#endif // ID_ALLOW_TOOLS
+
 /*
 ============
 idCmdSystemLocal::PrintMemInfo_f
@@ -517,6 +592,73 @@ CONSOLE_COMMAND( printMemInfo, "prints memory debugging data", NULL )
 			   
 	fileSystem->CloseFile( f );
 }
+
+#ifdef ID_ALLOW_TOOLS
+/*
+==================
+Com_EditLights_f
+==================
+*/
+static void Com_EditLights_f(const idCmdArgs &args) {
+	LightEditorInit(NULL);
+	cvarSystem->SetCVarInteger("g_editEntityMode", 1);
+}
+
+/*
+==================
+Com_EditSounds_f
+==================
+*/
+static void Com_EditSounds_f(const idCmdArgs &args) {
+	SoundEditorInit(NULL);
+	cvarSystem->SetCVarInteger("g_editEntityMode", 2);
+}
+
+/*
+==================
+Com_EditDecls_f
+==================
+*/
+static void Com_EditDecls_f(const idCmdArgs &args) {
+	DeclBrowserInit(NULL);
+}
+
+/*
+==================
+Com_EditAFs_f
+==================
+*/
+static void Com_EditAFs_f(const idCmdArgs &args) {
+	AFEditorInit(NULL);
+}
+
+/*
+==================
+Com_EditParticles_f
+==================
+*/
+static void Com_EditParticles_f(const idCmdArgs &args) {
+	ParticleEditorInit(NULL);
+}
+
+/*
+==================
+Com_EditScripts_f
+==================
+*/
+static void Com_EditScripts_f(const idCmdArgs &args) {
+	ScriptEditorInit(NULL);
+}
+
+/*
+==================
+Com_EditPDAs_f
+==================
+*/
+static void Com_EditPDAs_f(const idCmdArgs &args) {
+	PDAEditorInit(NULL);
+}
+#endif // ID_ALLOW_TOOLS
 
 /*
 ==================
@@ -1323,7 +1465,7 @@ void idCommonLocal::Init( int argc, const char* const* argv, const char* cmdline
 		// spawn the game thread, even if we are going to run without SMP
 		// one meg stack, because it can parse decls from gui surfaces (unfortunately)
 		// use a lower priority so job threads can run on the same core
-		gameThread.StartWorkerThread( "Game/Draw", CORE_1B, THREAD_BELOW_NORMAL, 0x100000 );
+		gameThread.StartWorkerThread( "Game/Draw", CORE_1B, THREAD_ABOVE_NORMAL, 0x100000 );
 		// boost this thread's priority, so it will prevent job threads from running while
 		// the render back end still has work to do
 		
@@ -1693,6 +1835,23 @@ void idCommonLocal::InitCommands()
 	cmdSystem->AddCommand( "runAAS", RunAAS_f, CMD_FL_TOOL, "compiles an AAS file for a map", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "runAASDir", RunAASDir_f, CMD_FL_TOOL, "compiles AAS files for all maps in a folder", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "runReach", RunReach_f, CMD_FL_TOOL, "calculates reachability for an AAS file", idCmdSystem::ArgCompletion_MapName );
+
+#ifdef ID_ALLOW_TOOLS
+	// editors
+	cmdSystem->AddCommand("editor", Com_Editor_f, CMD_FL_TOOL, "launches the level editor Radiant");
+	cmdSystem->AddCommand("editLights", Com_EditLights_f, CMD_FL_TOOL, "launches the in-game Light Editor");
+	cmdSystem->AddCommand("editSounds", Com_EditSounds_f, CMD_FL_TOOL, "launches the in-game Sound Editor");
+	cmdSystem->AddCommand("editDecls", Com_EditDecls_f, CMD_FL_TOOL, "launches the in-game Declaration Editor");
+	cmdSystem->AddCommand("editAFs", Com_EditAFs_f, CMD_FL_TOOL, "launches the in-game Articulated Figure Editor");
+	cmdSystem->AddCommand("editParticles", Com_EditParticles_f, CMD_FL_TOOL, "launches the in-game Particle Editor");
+	cmdSystem->AddCommand("editScripts", Com_EditScripts_f, CMD_FL_TOOL, "launches the in-game Script Editor");
+	cmdSystem->AddCommand("editGUIs", Com_EditGUIs_f, CMD_FL_TOOL, "launches the GUI Editor");
+	cmdSystem->AddCommand("editPDAs", Com_EditPDAs_f, CMD_FL_TOOL, "launches the in-game PDA Editor");
+	cmdSystem->AddCommand("debugger", Com_ScriptDebugger_f, CMD_FL_TOOL, "launches the Script Debugger");
+
+	//BSM Nerve: Add support for the material editor
+	cmdSystem->AddCommand("materialEditor", Com_MaterialEditor_f, CMD_FL_TOOL, "launches the Material Editor");
+#endif
 }
 
 /*
@@ -1974,6 +2133,58 @@ void idCommonLocal::PerformGameSwitch()
 
 #endif // #if defined(USE_DOOMCLASSIC)
 // RB end
+
+/*
+=================
+idCommonLocal::InitTool
+=================
+*/
+void idCommonLocal::InitTool(const toolFlag_t tool, const idDict *dict) {
+#ifdef ID_ALLOW_TOOLS
+	if (tool & EDITOR_SOUND) {
+		SoundEditorInit(dict);
+	}
+	else if (tool & EDITOR_LIGHT) {
+		LightEditorInit(dict);
+	}
+	else if (tool & EDITOR_PARTICLE) {
+		ParticleEditorInit(dict);
+	}
+	else if (tool & EDITOR_AF) {
+		AFEditorInit(dict);
+	}
+#endif
+}
+
+/*
+==================
+idCommonLocal::ActivateTool
+
+Activates or Deactivates a tool
+==================
+*/
+void idCommonLocal::ActivateTool(bool active) {
+	com_editorActive = active;
+	//	 ** Tools don't need to grab the mouse.  The SDL window grabs and release the mouse when activated.
+	//	Sys_GrabMouseCursor( !active );
+}
+
+/*
+==================
+idCommonLocal::WriteFlaggedCVarsToFile
+==================
+*/
+void idCommonLocal::WriteFlaggedCVarsToFile(const char *filename, int flags, const char *setCmd) {
+	idFile *f;
+
+	f = fileSystem->OpenFileWrite(filename, "fs_configpath");
+	if (!f) {
+		Printf("Couldn't write %s.\n", filename);
+		return;
+	}
+	cvarSystem->WriteFlaggedVariables(flags, setCmd, f);
+	fileSystem->CloseFile(f);
+}
 
 /*
 ==================

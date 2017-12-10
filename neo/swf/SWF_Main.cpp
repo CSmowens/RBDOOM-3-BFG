@@ -203,7 +203,7 @@ idSWF::idSWF( const char* filename_, idSoundWorld* soundWorld_ )
 		idImage::GetGeneratedName( generatedName, TD_DEFAULT, CF_2D );
 		
 		idBinaryImage im( generatedName );
-		ID_TIME_T binaryFileTime = im.LoadFromGeneratedFile( FILE_NOT_FOUND_TIMESTAMP );
+		ID_TIME_T binaryFileTime = im.LoadFromGeneratedFile( FILE_NOT_FOUND_TIMESTAMP, true );
 		
 		if( binaryFileTime != FILE_NOT_FOUND_TIMESTAMP )
 		{

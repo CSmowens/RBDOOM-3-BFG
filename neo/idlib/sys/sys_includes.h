@@ -48,7 +48,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef _D3SDK
 #ifndef GAME_DLL
 
-#define WINVER				0x501
+//#define WINVER				0x501
 
 #include <winsock2.h>
 #include <mmsystem.h>
@@ -85,6 +85,12 @@ If you have questions concerning this license or the applicable additional terms
 
 
 #include <dinput.h>
+//ANON - Directx macro redefinition bullshit in editors (SOLWED COMPILING PROCESS DOWN)
+#ifdef _MSC_VER 
+#pragma warning( disable: 4005 )  /* macro redefinition */
+#endif
+
+#pragma warning(disable : 4996)
 
 #endif /* !GAME_DLL */
 #endif /* !_D3SDK */

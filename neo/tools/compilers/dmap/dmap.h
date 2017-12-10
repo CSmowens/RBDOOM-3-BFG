@@ -202,6 +202,11 @@ typedef struct tree_s
 
 #define	MAX_QPATH			256			// max length of a game pathname
 
+struct mapSurface_t {
+	srfTriangles_t* tris;
+	const idMaterial* material;
+};
+
 typedef struct
 {
 	idRenderLightLocal	def;
@@ -209,6 +214,8 @@ typedef struct
 	srfTriangles_t*		shadowTris;
 	
 	idPlane				frustumPlanes[6];		// RB: should be calculated after R_DeriveLightData()
+
+	mapSurface_t occluders[128];
 } mapLight_t;
 
 #define	MAX_GROUP_LIGHTS	16
@@ -524,6 +531,7 @@ int			NumberNodes_r( node_t* node, int nextNumber );
 
 srfTriangles_t*	ShareMapTriVerts( const mapTri_t* tris );
 void WriteOutputFile();
-
+void WriteProcFile();
+void WriteOclFile(void);
 //=============================================================================
 

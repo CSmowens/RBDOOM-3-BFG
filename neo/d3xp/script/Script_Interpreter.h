@@ -36,12 +36,12 @@ If you have questions concerning this license or the applicable additional terms
 #define LOCALSTACK_SIZE 	(6144 * 2)
 // RB end
 
-typedef struct prstack_s
+struct prstack_t
 {
 	int 				s;
 	const function_t*	f;
 	int 				stackbase;
-} prstack_t;
+};
 
 class idInterpreter
 {
@@ -125,6 +125,8 @@ public:
 	const prstack_t*		GetCallstack() const;
 	const function_t*	GetCurrentFunction() const;
 	idThread*			GetThread() const;
+
+	static int sLastScriptExecuteTime;
 	
 };
 

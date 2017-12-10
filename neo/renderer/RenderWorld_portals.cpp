@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 // if we hit this many planes, we will just stop cropping the
 // view down, which is still correct, just conservative
-const int MAX_PORTAL_PLANES	= 20;
+const int MAX_PORTAL_PLANES	= 32;
 
 struct portalStack_t
 {
@@ -148,7 +148,8 @@ bool idRenderWorldLocal::CullEntityByPortals( const idRenderEntityLocal* entity,
 	{
 	
 		idRenderMatrix baseModelProject;
-		idRenderMatrix::Inverse( entity->inverseBaseModelProject, baseModelProject );
+		//Was idRenderMatrix::Inverse but changed to InverseByDoubles for persicion
+		idRenderMatrix::InverseByDoubles( entity->inverseBaseModelProject, baseModelProject );
 		
 		idPlane frustumPlanes[6];
 		idRenderMatrix::GetFrustumPlanes( frustumPlanes, baseModelProject, false, true );
@@ -292,8 +293,12 @@ bool idRenderWorldLocal::CullLightByPortals( const idRenderLightLocal* light, co
 	else if( r_useLightPortalCulling.GetInteger() >= 2 )
 	{
 	
+		idRenderMatrix baseLightProject;
+		//Was idRenderMatrix::Inverse but changed to InverseByDoubles for persicion
+		idRenderMatrix::InverseByDoubles(light->inverseBaseLightProject, baseLightProject);
+
 		idPlane frustumPlanes[6];
-		idRenderMatrix::GetFrustumPlanes( frustumPlanes, light->baseLightProject, true, true );
+		idRenderMatrix::GetFrustumPlanes( frustumPlanes, baseLightProject, true, true );
 		
 		// exact clip of light faces against all planes
 		for( int i = 0; i < 6; i++ )
@@ -431,9 +436,17 @@ idScreenRect idRenderWorldLocal::ScreenRectFromWinding( const idWinding* w, cons
 	for( int i = 0; i < w->GetNumPoints(); i++ )
 	{
 		idVec3 v;
-		idVec3 ndc;
 		R_LocalPointToGlobal( space->modelMatrix, ( *w )[i].ToVec3(), v );
-		R_GlobalToNormalizedDeviceCoordinates( v, ndc );
+
+		idVec4 eye, clip;
+		idVec3 ndc;
+
+		// _D3XP use tr.primaryView when there is no tr.viewDef
+		const viewDef_t* viewDef = (tr.viewDef != NULL) ? tr.viewDef : tr.primaryView;
+		idRenderMatrix::TransformModelToClip(v, viewDef->worldSpace.modelRenderViewMatrix, viewDef->projectionRenderMatrix, eye, clip);
+		idRenderMatrix::TransformClipToDevice(clip, ndc);
+
+		//R_GlobalToNormalizedDeviceCoordinates( v, ndc );
 		
 		float windowX = ( ndc[0] * 0.5f + 0.5f ) * viewWidth;
 		float windowY = ( ndc[1] * 0.5f + 0.5f ) * viewHeight;
@@ -526,6 +539,21 @@ void idRenderWorldLocal::FloodViewThroughArea_r( const idVec3& origin, int areaN
 	// go through all the portals
 	for( const portal_t* p = area->portals; p != NULL; p = p->next )
 	{
+		// make sure the portal isn't in our stack trace,
+		// which would cause an infinite loop
+		const portalStack_t* check = ps;
+		for (; check != NULL; check = check->next)
+		{
+			if (check->p == p)
+			{
+				break;		// don't recursively enter a stack
+			}
+		}
+		if (check)
+		{
+			continue;	// already in stack
+		}
+		
 		// an enclosing door may have sealed the portal off
 		if( p->doublePortal->blockingBits & PS_BLOCK_VIEW )
 		{
@@ -537,21 +565,6 @@ void idRenderWorldLocal::FloodViewThroughArea_r( const idVec3& origin, int areaN
 		if( d < -0.1f )
 		{
 			continue;
-		}
-		
-		// make sure the portal isn't in our stack trace,
-		// which would cause an infinite loop
-		const portalStack_t* check = ps;
-		for( ; check != NULL; check = check->next )
-		{
-			if( check->p == p )
-			{
-				break;		// don't recursively enter a stack
-			}
-		}
-		if( check )
-		{
-			continue;	// already in stack
 		}
 		
 		// if we are very close to the portal surface, don't bother clipping

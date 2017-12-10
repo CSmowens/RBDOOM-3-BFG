@@ -41,7 +41,7 @@ idCVar r_useStencilShadowPreload( "r_useStencilShadowPreload", "1", CVAR_RENDERE
 idCVar r_skipShaderPasses( "r_skipShaderPasses", "0", CVAR_RENDERER | CVAR_BOOL, "" );
 idCVar r_skipInteractionFastPath( "r_skipInteractionFastPath", "1", CVAR_RENDERER | CVAR_BOOL, "" );
 idCVar r_useLightStencilSelect( "r_useLightStencilSelect", "0", CVAR_RENDERER | CVAR_BOOL, "use stencil select pass" );
-
+idCVar r_shadowMapMaxDistance("r_shadowMapMaxDistance", "2900", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "objects past this distance won't cast shadows");
 extern idCVar stereoRender_swapEyes;
 
 backEndState_t	backEnd;
@@ -1259,8 +1259,14 @@ static void RB_RenderInteractions( const drawSurf_t* surfList, const viewLight_t
 	// are added single-threaded, and there is only a negligable amount
 	// of benefit to trying to sort by materials.
 	//---------------------------------
-	static const int MAX_INTERACTIONS_PER_LIGHT = 1024;
-	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 256;
+#ifdef ID_ALLOW_TOOLS
+	// foresthale 2014-05-28: for sake of radiant usability, increased this from 1024,128 to 8192,4096
+	static const int MAX_INTERACTIONS_PER_LIGHT = 16384; //8192;
+	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 32768; // 8192; //4096;
+#else
+	static const int MAX_INTERACTIONS_PER_LIGHT = 16384; // 1024;
+	static const int MAX_COMPLEX_INTERACTIONS_PER_LIGHT = 8192; // 128;
+#endif
 	idStaticList< const drawSurf_t*, MAX_INTERACTIONS_PER_LIGHT > allSurfaces;
 	idStaticList< const drawSurf_t*, MAX_COMPLEX_INTERACTIONS_PER_LIGHT > complexSurfaces;
 	for( const drawSurf_t* walk = surfList; walk != NULL; walk = walk->nextOnLight )
@@ -3095,6 +3101,28 @@ static void RB_ShadowMapPass( const drawSurf_t* drawSurfs, const viewLight_t* vL
 			continue;	// a job may have created an empty shadow geometry
 		}
 		
+		if (r_shadowMapMaxDistance.GetFloat() < 0)
+		{
+			idLib::Warning("r_shadowMapMaxDistance should be a positive number");
+			r_shadowMapMaxDistance.SetFloat(0);
+		}
+
+		// don't shadow objects too far away
+		idVec3 viewCoordinate;
+		idRenderMatrix modelViewMatrix;
+		idRenderMatrix::Transpose(*(idRenderMatrix*)drawSurf->space->modelViewMatrix, modelViewMatrix);
+		modelViewMatrix.TransformPoint(idVec3(0, 0, 0), viewCoordinate);
+		/*if( drawSurf->space->entityDef->parms.hModel->IsStaticWorldModel() && r_shadowMapStaticShadowsDistance.GetFloat() < viewCoordinate.LengthFast() )
+		{
+		continue;
+		} */
+		// motorsep 11-19-2014; moved check for world models (brushes) here so that the world always cast shadows, and only shadows from models obey Max Distance setting
+		// Dandel - 12-29-2014; The order of the comparison is critical for preventing pointer errors in access on demo playback.
+		if (r_shadowMapMaxDistance.GetFloat() < viewCoordinate.LengthFast() && !drawSurf->space->entityDef->parms.hModel->IsStaticWorldModel())
+		{
+			continue;
+		}
+
 		if( drawSurf->space != backEnd.currentSpace )
 		{
 			idRenderMatrix modelRenderMatrix;
@@ -4804,10 +4832,10 @@ static void RB_SSAO( const viewDef_t* viewDef )
 	}
 	
 	float screenCorrectionParm[4];
-	screenCorrectionParm[0] = 1.0f / screenWidth;
-	screenCorrectionParm[1] = 1.0f / screenHeight;
-	screenCorrectionParm[2] = screenWidth;
-	screenCorrectionParm[3] = screenHeight;
+	screenCorrectionParm[0] = 1.0f / glConfig.nativeScreenWidth;
+	screenCorrectionParm[1] = 1.0f / glConfig.nativeScreenHeight;
+	screenCorrectionParm[2] = glConfig.nativeScreenWidth;
+	screenCorrectionParm[3] = glConfig.nativeScreenHeight;
 	SetFragmentParm( RENDERPARM_SCREENCORRECTIONFACTOR, screenCorrectionParm ); // rpScreenCorrectionFactor
 	
 #if 0
@@ -5054,10 +5082,10 @@ static void RB_SSGI( const viewDef_t* viewDef )
 	}
 	
 	float screenCorrectionParm[4];
-	screenCorrectionParm[0] = 1.0f / screenWidth;
-	screenCorrectionParm[1] = 1.0f / screenHeight;
-	screenCorrectionParm[2] = screenWidth;
-	screenCorrectionParm[3] = screenHeight;
+	screenCorrectionParm[0] = 1.0f / glConfig.nativeScreenWidth;
+	screenCorrectionParm[1] = 1.0f / glConfig.nativeScreenHeight;
+	screenCorrectionParm[2] = glConfig.nativeScreenWidth;
+	screenCorrectionParm[3] = glConfig.nativeScreenHeight;
 	SetFragmentParm( RENDERPARM_SCREENCORRECTIONFACTOR, screenCorrectionParm ); // rpScreenCorrectionFactor
 	
 #if 0
@@ -5429,8 +5457,8 @@ void RB_DrawViewInternal( const viewDef_t* viewDef, const int stereoEye )
 		/*
 		glBindFramebuffer( GL_READ_FRAMEBUFFER, globalFramebuffers.hdrFBO->GetFramebuffer() );
 		glBindFramebuffer( GL_DRAW_FRAMEBUFFER, globalFramebuffers.hdrQuarterFBO->GetFramebuffer() );
-		glBlitFramebuffer( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(),
-						   0, 0, renderSystem->GetWidth() * 0.25f, renderSystem->GetHeight() * 0.25f,
+		glBlitFramebuffer( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight,
+						   0, 0, glConfig.nativeScreenWidth * 0.25f, glConfig.nativeScreenHeight * 0.25f,
 						   GL_COLOR_BUFFER_BIT,
 						   GL_LINEAR );
 		*/
@@ -5440,15 +5468,15 @@ void RB_DrawViewInternal( const viewDef_t* viewDef, const int stereoEye )
 		{
 			glBindFramebuffer( GL_READ_FRAMEBUFFER, globalFramebuffers.hdrFBO->GetFramebuffer() );
 			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, globalFramebuffers.hdrNonMSAAFBO->GetFramebuffer() );
-			glBlitFramebuffer( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(),
-							   0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(),
+			glBlitFramebuffer( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight,
+							   0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight,
 							   GL_COLOR_BUFFER_BIT,
 							   GL_LINEAR );
 							   
 			// TODO resolve to 1x1
 			glBindFramebuffer( GL_READ_FRAMEBUFFER_EXT, globalFramebuffers.hdrNonMSAAFBO->GetFramebuffer() );
 			glBindFramebuffer( GL_DRAW_FRAMEBUFFER_EXT, globalFramebuffers.hdr64FBO->GetFramebuffer() );
-			glBlitFramebuffer( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(),
+			glBlitFramebuffer( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight,
 							   0, 0, 64, 64,
 							   GL_COLOR_BUFFER_BIT,
 							   GL_LINEAR );
@@ -5458,7 +5486,7 @@ void RB_DrawViewInternal( const viewDef_t* viewDef, const int stereoEye )
 		{
 			glBindFramebuffer( GL_READ_FRAMEBUFFER_EXT, globalFramebuffers.hdrFBO->GetFramebuffer() );
 			glBindFramebuffer( GL_DRAW_FRAMEBUFFER_EXT, globalFramebuffers.hdr64FBO->GetFramebuffer() );
-			glBlitFramebuffer( 0, 0, renderSystem->GetWidth(), renderSystem->GetHeight(),
+			glBlitFramebuffer( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight,
 							   0, 0, 64, 64,
 							   GL_COLOR_BUFFER_BIT,
 							   GL_LINEAR );
@@ -5757,14 +5785,14 @@ void RB_PostProcess( const void* data )
 		 *                           |output|
 		*/
 		
-		globalImages->smaaInputImage->CopyFramebuffer( 0, 0, screenWidth, screenHeight );
+		globalImages->smaaInputImage->CopyFramebuffer( 0, 0, glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
 		// set SMAA_RT_METRICS = rpScreenCorrectionFactor
 		float screenCorrectionParm[4];
-		screenCorrectionParm[0] = 1.0f / screenWidth;
-		screenCorrectionParm[1] = 1.0f / screenHeight;
-		screenCorrectionParm[2] = screenWidth;
-		screenCorrectionParm[3] = screenHeight;
+		screenCorrectionParm[0] = 1.0f / glConfig.nativeScreenWidth;
+		screenCorrectionParm[1] = 1.0f / glConfig.nativeScreenHeight;
+		screenCorrectionParm[2] = glConfig.nativeScreenWidth;
+		screenCorrectionParm[3] = glConfig.nativeScreenHeight;
 		SetFragmentParm( RENDERPARM_SCREENCORRECTIONFACTOR, screenCorrectionParm ); // rpScreenCorrectionFactor
 		
 		globalFramebuffers.smaaEdgesFBO->Bind();

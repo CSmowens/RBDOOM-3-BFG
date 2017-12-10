@@ -181,19 +181,31 @@ idRenderModelDecal::GlobalProjectionParmsToLocal
 */
 void idRenderModelDecal::GlobalProjectionParmsToLocal( decalProjectionParms_t& localParms, const decalProjectionParms_t& globalParms, const idVec3& origin, const idMat3& axis )
 {
-	float modelMatrix[16];
+	//ANON updated decals to work wih rendermatrix
+	//float modelMatrix[16];
 	
-	R_AxisToModelMatrix( axis, origin, modelMatrix );
+	//R_AxisToModelMatrix( axis, origin, modelMatrix );
+
+	idRenderMatrix modelMatrix;
+
+	idRenderMatrix::CreateFromOriginAxis(origin, axis, modelMatrix);
+
 	
 	for( int j = 0; j < NUM_DECAL_BOUNDING_PLANES; j++ )
 	{
-		R_GlobalPlaneToLocal( modelMatrix, globalParms.boundingPlanes[j], localParms.boundingPlanes[j] );
+		modelMatrix.InverseTransformPlane(globalParms.boundingPlanes[j], localParms.boundingPlanes[j], false);
+		//R_GlobalPlaneToLocal( modelMatrix, globalParms.boundingPlanes[j], localParms.boundingPlanes[j] );
 	}
-	R_GlobalPlaneToLocal( modelMatrix, globalParms.fadePlanes[0], localParms.fadePlanes[0] );
+	modelMatrix.InverseTransformPlane(globalParms.fadePlanes[0], localParms.fadePlanes[0], false);
+	modelMatrix.InverseTransformPlane(globalParms.fadePlanes[1], localParms.fadePlanes[1], false);
+	modelMatrix.InverseTransformPlane(globalParms.textureAxis[0], localParms.textureAxis[0], false);
+	modelMatrix.InverseTransformPlane(globalParms.textureAxis[1], localParms.textureAxis[1], false);
+	modelMatrix.TransformPoint(globalParms.projectionOrigin, localParms.projectionOrigin);
+	/*R_GlobalPlaneToLocal( modelMatrix, globalParms.fadePlanes[0], localParms.fadePlanes[0] );
 	R_GlobalPlaneToLocal( modelMatrix, globalParms.fadePlanes[1], localParms.fadePlanes[1] );
 	R_GlobalPlaneToLocal( modelMatrix, globalParms.textureAxis[0], localParms.textureAxis[0] );
 	R_GlobalPlaneToLocal( modelMatrix, globalParms.textureAxis[1], localParms.textureAxis[1] );
-	R_GlobalPointToLocal( modelMatrix, globalParms.projectionOrigin, localParms.projectionOrigin );
+	R_GlobalPointToLocal( modelMatrix, globalParms.projectionOrigin, localParms.projectionOrigin );*/
 	localParms.projectionBounds = globalParms.projectionBounds;
 	localParms.projectionBounds.TranslateSelf( -origin );
 	localParms.projectionBounds.RotateSelf( axis.Transpose() );

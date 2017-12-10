@@ -39,6 +39,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Image.h"
 #include "Font.h"
 #include "Framebuffer.h"
+#include "Framebuffer2.h"
 
 // everything that is needed by the backend needs
 // to be double buffered to allow it to run in
@@ -379,6 +380,9 @@ struct viewEntity_t
 	float					modelMatrix[16];		// local coords to global coords
 	float					modelViewMatrix[16];	// local coords to eye coords
 	
+	idRenderMatrix			modelRenderMatrix;		// local coords to global coords
+	idRenderMatrix			modelRenderViewMatrix;	// local coords to eye coords
+
 	idRenderMatrix			mvp;
 	
 	// parallelAddModels will build a chain of surfaces here that will need to
@@ -832,6 +836,12 @@ public:
 	virtual void			WriteDemoPics();
 	virtual void			WriteEndFrame();
 	virtual void			DrawDemoPics();
+
+	// foresthale 2014-05-19: the editor views need some wrapper code to set up a view render and restore state afterward so that the fixed function OpenGL code of the editors keep working
+	virtual void			Editor_SetupState();
+	virtual void			Editor_BeginView(int width, int height, int &restoreWidth, int &restoreHeight);
+	virtual void			Editor_EndView(int restoreWidth, int restoreHeight);
+
 	virtual const emptyCommand_t* 	SwapCommandBuffers( uint64* frontEndMicroSec, uint64* backEndMicroSec, uint64* shadowMicroSec, uint64* gpuMicroSec );
 	
 	virtual void			SwapCommandBuffers_FinishRendering( uint64* frontEndMicroSec, uint64* backEndMicroSec, uint64* shadowMicroSec, uint64* gpuMicroSec );
@@ -851,8 +861,6 @@ public:
 	// internal functions
 	idRenderSystemLocal();
 	~idRenderSystemLocal();
-
-	void					UpdateStereo3DMode();
 	
 	void					Clear();
 	void					GetCroppedViewport( idScreenRect* viewport );

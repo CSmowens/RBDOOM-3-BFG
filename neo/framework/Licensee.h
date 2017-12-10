@@ -70,4 +70,7 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 // RB end
 
-
+// editor info
+#define EDITOR_DEFAULT_PROJECT			"DeadWorld.qe4"
+#define EDITOR_REGISTRY_KEY				"Radiant"
+#define EDITOR_WINDOWTEXT				"Dead World Level Editor"

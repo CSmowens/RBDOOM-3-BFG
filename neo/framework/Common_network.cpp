@@ -145,7 +145,7 @@ void idCommonLocal::SendSnapshots()
 	game->ServerWriteSnapshot( ss );
 	
 	session->SendSnapshot( ss );
-	nextSnapshotSendTime = MSEC_ALIGN_TO_FRAME( currentTime + net_snapRate.GetInteger() );
+	nextSnapshotSendTime = FRAME_TO_MSEC( currentTime + net_snapRate.GetInteger() );
 }
 
 /*

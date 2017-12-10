@@ -80,7 +80,7 @@ void Framebuffer::Init()
 	cmdSystem->AddCommand( "listFramebuffers", R_ListFramebuffers_f, CMD_FL_RENDERER, "lists framebuffers" );
 	
 	backEnd.glState.currentFramebuffer = NULL;
-	
+
 	// SHADOWMAPS
 	
 	int width, height;
@@ -95,12 +95,25 @@ void Framebuffer::Init()
 		glDrawBuffers( 0, NULL );
 	}
 	
-	// HDR
+	globalFramebuffers.m_diffuseRT = new Framebuffer("diffuse", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight);
+	globalFramebuffers.m_diffuseRT->Bind();
+	globalFramebuffers.m_diffuseRT->AddColorBuffer(GL_RGBA16F, 0);
+	globalFramebuffers.m_diffuseRT->Check();
 
-	int screenWidth = renderSystem->GetWidth();
-	int screenHeight = renderSystem->GetHeight();
+
+	globalFramebuffers.m_positionRT = new Framebuffer("position", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight);
+	globalFramebuffers.m_positionRT->Bind();
+	globalFramebuffers.m_positionRT->AddColorBuffer(GL_RGBA16F, 0);
+	globalFramebuffers.m_positionRT->Check();
+
+	globalFramebuffers.m_normalsRT = new Framebuffer("normal", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight);
+	globalFramebuffers.m_normalsRT->Bind();
+	globalFramebuffers.m_normalsRT->AddColorBuffer(GL_RGBA16F, 0);
+	globalFramebuffers.m_normalsRT->Check();
+
+	// HDR
 	
-	globalFramebuffers.hdrFBO = new Framebuffer( "_hdr", screenWidth, screenHeight );
+	globalFramebuffers.hdrFBO = new Framebuffer( "_hdr", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 	globalFramebuffers.hdrFBO->Bind();
 	
 #if defined(USE_HDR_MSAA)
@@ -126,7 +139,7 @@ void Framebuffer::Init()
 	
 	// HDR no MSAA
 #if defined(USE_HDR_MSAA)
-	globalFramebuffers.hdrNonMSAAFBO = new Framebuffer( "_hdrNoMSAA", screenWidth, screenHeight );
+	globalFramebuffers.hdrNonMSAAFBO = new Framebuffer( "_hdrNoMSAA", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 	globalFramebuffers.hdrNonMSAAFBO->Bind();
 	
 	globalFramebuffers.hdrNonMSAAFBO->AddColorBuffer( GL_RGBA16F, 0 );
@@ -149,7 +162,7 @@ void Framebuffer::Init()
 	
 	for( int i = 0; i < MAX_BLOOM_BUFFERS; i++ )
 	{
-		globalFramebuffers.bloomRenderFBO[i] = new Framebuffer( va( "_bloomRender%i", i ), screenWidth, screenHeight );
+		globalFramebuffers.bloomRenderFBO[i] = new Framebuffer( va( "_bloomRender%i", i ), glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		globalFramebuffers.bloomRenderFBO[i]->Bind();
 		globalFramebuffers.bloomRenderFBO[i]->AddColorBuffer( GL_RGBA8, 0 );
 		globalFramebuffers.bloomRenderFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->bloomRenderImage[i], 0 );
@@ -160,7 +173,7 @@ void Framebuffer::Init()
 	
 	for( int i = 0; i < MAX_SSAO_BUFFERS; i++ )
 	{
-		globalFramebuffers.ambientOcclusionFBO[i] = new Framebuffer( va( "_aoRender%i", i ), screenWidth, screenHeight );
+		globalFramebuffers.ambientOcclusionFBO[i] = new Framebuffer( va( "_aoRender%i", i ), glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		globalFramebuffers.ambientOcclusionFBO[i]->Bind();
 		globalFramebuffers.ambientOcclusionFBO[i]->AddColorBuffer( GL_RGBA8, 0 );
 		globalFramebuffers.ambientOcclusionFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->ambientOcclusionImage[i], 0 );
@@ -171,7 +184,7 @@ void Framebuffer::Init()
 	
 	for( int i = 0; i < MAX_HIERARCHICAL_ZBUFFERS; i++ )
 	{
-		globalFramebuffers.csDepthFBO[i] = new Framebuffer( va( "_csz%i", i ), screenWidth / ( 1 << i ), screenHeight / ( 1 << i ) );
+		globalFramebuffers.csDepthFBO[i] = new Framebuffer( va( "_csz%i", i ), glConfig.nativeScreenWidth / ( 1 << i ), glConfig.nativeScreenHeight / ( 1 << i ) );
 		globalFramebuffers.csDepthFBO[i]->Bind();
 		globalFramebuffers.csDepthFBO[i]->AddColorBuffer( GL_R32F, 0 );
 		globalFramebuffers.csDepthFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->hierarchicalZbufferImage, 0, i );
@@ -180,21 +193,21 @@ void Framebuffer::Init()
 	
 	// GEOMETRY BUFFER
 	
-	//globalFramebuffers.geometryBufferFBO = new Framebuffer( "_gbuffer", screenWidth, screenHeight );
-	//globalFramebuffers.geometryBufferFBO->Bind();
-	//globalFramebuffers.geometryBufferFBO->AddColorBuffer( GL_RGBA8, 0 );
-	//globalFramebuffers.geometryBufferFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->currentNormalsImage, 0 );
-	//globalFramebuffers.geometryBufferFBO->Check();
+	globalFramebuffers.geometryBufferFBO = new Framebuffer( "_gbuffer", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
+	globalFramebuffers.geometryBufferFBO->Bind();
+	globalFramebuffers.geometryBufferFBO->AddColorBuffer( GL_RGBA8, 0 );
+	globalFramebuffers.geometryBufferFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->currentNormalsImage, 0 );
+	globalFramebuffers.geometryBufferFBO->Check();
 	
 	// SMAA
 	
-	globalFramebuffers.smaaEdgesFBO = new Framebuffer( "_smaaEdges", screenWidth, screenHeight );
+	globalFramebuffers.smaaEdgesFBO = new Framebuffer( "_smaaEdges", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 	globalFramebuffers.smaaEdgesFBO->Bind();
 	globalFramebuffers.smaaEdgesFBO->AddColorBuffer( GL_RGBA8, 0 );
 	globalFramebuffers.smaaEdgesFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->smaaEdgesImage, 0 );
 	globalFramebuffers.smaaEdgesFBO->Check();
 	
-	globalFramebuffers.smaaBlendFBO = new Framebuffer( "_smaaBlend", screenWidth, screenHeight );
+	globalFramebuffers.smaaBlendFBO = new Framebuffer( "_smaaBlend", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 	globalFramebuffers.smaaBlendFBO->Bind();
 	globalFramebuffers.smaaBlendFBO->AddColorBuffer( GL_RGBA8, 0 );
 	globalFramebuffers.smaaBlendFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->smaaBlendImage, 0 );
@@ -205,29 +218,26 @@ void Framebuffer::Init()
 
 void Framebuffer::CheckFramebuffers()
 {
-	int screenWidth = renderSystem->GetWidth();
-	int screenHeight = renderSystem->GetHeight();
-
-	if( globalFramebuffers.hdrFBO->GetWidth() != screenWidth || globalFramebuffers.hdrFBO->GetHeight() != screenHeight )
+	if( globalFramebuffers.hdrFBO->GetWidth() != glConfig.nativeScreenWidth || globalFramebuffers.hdrFBO->GetHeight() != glConfig.nativeScreenHeight )
 	{
 		Unbind();
 		
 		// HDR
-		globalImages->currentRenderHDRImage->Resize( screenWidth, screenHeight );
-		globalImages->currentDepthImage->Resize( screenWidth, screenHeight );
+		globalImages->currentRenderHDRImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
+		globalImages->currentDepthImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
 #if defined(USE_HDR_MSAA)
 		if( r_multiSamples.GetBool() )
 		{
-			globalImages->currentRenderHDRImageNoMSAA->Resize( screenWidth, screenHeight );
+			globalImages->currentRenderHDRImageNoMSAA->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 			
 			globalFramebuffers.hdrFBO->Bind();
 			globalFramebuffers.hdrFBO->AttachImage2D( GL_TEXTURE_2D_MULTISAMPLE, globalImages->currentRenderHDRImage, 0 );
 			globalFramebuffers.hdrFBO->AttachImageDepth( GL_TEXTURE_2D_MULTISAMPLE, globalImages->currentDepthImage );
 			globalFramebuffers.hdrFBO->Check();
 			
-			globalFramebuffers.hdrNonMSAAFBO->width = screenWidth;
-			globalFramebuffers.hdrNonMSAAFBO->height = screenHeight;
+			globalFramebuffers.hdrNonMSAAFBO->width = glConfig.nativeScreenWidth;
+			globalFramebuffers.hdrNonMSAAFBO->height = glConfig.nativeScreenHeight;
 		}
 		else
 #endif
@@ -238,12 +248,12 @@ void Framebuffer::CheckFramebuffers()
 			globalFramebuffers.hdrFBO->Check();
 		}
 		
-		globalFramebuffers.hdrFBO->width = screenWidth;
-		globalFramebuffers.hdrFBO->height = screenHeight;
+		globalFramebuffers.hdrFBO->width = glConfig.nativeScreenWidth;
+		globalFramebuffers.hdrFBO->height = glConfig.nativeScreenHeight;
 		
 		// HDR quarter
 		/*
-		globalImages->currentRenderHDRImageQuarter->Resize( screenWidth / 4, screenHeight / 4 );
+		globalImages->currentRenderHDRImageQuarter->Resize( glConfig.nativeScreenWidth / 4, glConfig.nativeScreenHeight / 4 );
 		
 		globalFramebuffers.hdrQuarterFBO->Bind();
 		globalFramebuffers.hdrQuarterFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->currentRenderHDRImageQuarter, 0 );
@@ -254,10 +264,10 @@ void Framebuffer::CheckFramebuffers()
 		
 		for( int i = 0; i < MAX_BLOOM_BUFFERS; i++ )
 		{
-			globalImages->bloomRenderImage[i]->Resize( screenWidth / 4, screenHeight / 4 );
+			globalImages->bloomRenderImage[i]->Resize( glConfig.nativeScreenWidth / 4, glConfig.nativeScreenHeight / 4 );
 			
-			globalFramebuffers.bloomRenderFBO[i]->width = screenWidth / 4;
-			globalFramebuffers.bloomRenderFBO[i]->height = screenHeight / 4;
+			globalFramebuffers.bloomRenderFBO[i]->width = glConfig.nativeScreenWidth / 4;
+			globalFramebuffers.bloomRenderFBO[i]->height = glConfig.nativeScreenHeight / 4;
 			
 			globalFramebuffers.bloomRenderFBO[i]->Bind();
 			globalFramebuffers.bloomRenderFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->bloomRenderImage[i], 0 );
@@ -268,10 +278,10 @@ void Framebuffer::CheckFramebuffers()
 		
 		for( int i = 0; i < MAX_SSAO_BUFFERS; i++ )
 		{
-			globalImages->ambientOcclusionImage[i]->Resize( screenWidth, screenHeight );
+			globalImages->ambientOcclusionImage[i]->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 			
-			globalFramebuffers.ambientOcclusionFBO[i]->width = screenWidth;
-			globalFramebuffers.ambientOcclusionFBO[i]->height = screenHeight;
+			globalFramebuffers.ambientOcclusionFBO[i]->width = glConfig.nativeScreenWidth;
+			globalFramebuffers.ambientOcclusionFBO[i]->height = glConfig.nativeScreenHeight;
 			
 			globalFramebuffers.ambientOcclusionFBO[i]->Bind();
 			globalFramebuffers.ambientOcclusionFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->ambientOcclusionImage[i], 0 );
@@ -280,12 +290,12 @@ void Framebuffer::CheckFramebuffers()
 		
 		// HIERARCHICAL Z BUFFER
 		
-		globalImages->hierarchicalZbufferImage->Resize( screenWidth, screenHeight );
+		globalImages->hierarchicalZbufferImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
 		for( int i = 0; i < MAX_HIERARCHICAL_ZBUFFERS; i++ )
 		{
-			globalFramebuffers.csDepthFBO[i]->width = screenWidth / ( 1 << i );
-			globalFramebuffers.csDepthFBO[i]->height = screenHeight / ( 1 << i );
+			globalFramebuffers.csDepthFBO[i]->width = glConfig.nativeScreenWidth / ( 1 << i );
+			globalFramebuffers.csDepthFBO[i]->height = glConfig.nativeScreenHeight / ( 1 << i );
 			
 			globalFramebuffers.csDepthFBO[i]->Bind();
 			globalFramebuffers.csDepthFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->hierarchicalZbufferImage, 0, i );
@@ -294,30 +304,30 @@ void Framebuffer::CheckFramebuffers()
 		
 		// GEOMETRY BUFFER
 		
-		//globalImages->currentNormalsImage->Resize( screenWidth, screenHeight );
+		globalImages->currentNormalsImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
-		//globalFramebuffers.geometryBufferFBO->width = screenWidth;
-		//globalFramebuffers.geometryBufferFBO->height = screenHeight;
+		globalFramebuffers.geometryBufferFBO->width = glConfig.nativeScreenWidth;
+		globalFramebuffers.geometryBufferFBO->height = glConfig.nativeScreenHeight;
 		
-		//globalFramebuffers.geometryBufferFBO->Bind();
-		//globalFramebuffers.geometryBufferFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->currentNormalsImage, 0 );
-		//globalFramebuffers.geometryBufferFBO->Check();
+		globalFramebuffers.geometryBufferFBO->Bind();
+		globalFramebuffers.geometryBufferFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->currentNormalsImage, 0 );
+		globalFramebuffers.geometryBufferFBO->Check();
 		
 		// SMAA
 		
-		globalImages->smaaEdgesImage->Resize( screenWidth, screenHeight );
+		globalImages->smaaEdgesImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
-		globalFramebuffers.smaaEdgesFBO->width = screenWidth;
-		globalFramebuffers.smaaEdgesFBO->height = screenHeight;
+		globalFramebuffers.smaaEdgesFBO->width = glConfig.nativeScreenWidth;
+		globalFramebuffers.smaaEdgesFBO->height = glConfig.nativeScreenHeight;
 		
 		globalFramebuffers.smaaEdgesFBO->Bind();
 		globalFramebuffers.smaaEdgesFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->smaaEdgesImage, 0 );
 		globalFramebuffers.smaaEdgesFBO->Check();
 		
-		globalImages->smaaBlendImage->Resize( screenWidth, screenHeight );
+		globalImages->smaaBlendImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );
 		
-		globalFramebuffers.smaaBlendFBO->width = screenWidth;
-		globalFramebuffers.smaaBlendFBO->height = screenHeight;
+		globalFramebuffers.smaaBlendFBO->width = glConfig.nativeScreenWidth;
+		globalFramebuffers.smaaBlendFBO->height = glConfig.nativeScreenHeight;
 		
 		globalFramebuffers.smaaBlendFBO->Bind();
 		globalFramebuffers.smaaBlendFBO->AttachImage2D( GL_TEXTURE_2D, globalImages->smaaBlendImage, 0 );
@@ -461,6 +471,18 @@ void Framebuffer::AttachImageDepth( int target, const idImage* image )
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, image->texnum, 0 );
 }
 
+
+void Framebuffer::AttachImageDepth(int target, const idImage* image, int i)
+{
+	if ((target != GL_TEXTURE_2D) && (target != GL_TEXTURE_2D_MULTISAMPLE))
+	{
+		common->Warning("Framebuffer::AttachImageDepth( %s ): invalid target", fboName.c_str());
+		return;
+	}
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, image->texnum, i);
+}
+
 void Framebuffer::AttachImageDepthLayer( const idImage* image, int layer )
 {
 	glFramebufferTextureLayer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, image->texnum, 0, layer );
@@ -517,4 +539,27 @@ void Framebuffer::Check()
 	};
 	
 	glBindFramebuffer( GL_FRAMEBUFFER, prev );
+}
+
+/*
+===============
+BindSystemFramebuffer
+===============
+*/
+void Framebuffer::BindSystemFramebuffer()
+{
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+	
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+	// check for errors
+	GL_CheckErrors();
+
+	glDrawBuffer(GL_BACK);
+	glReadBuffer(GL_BACK);
+
+	// check for errors
+	GL_CheckErrors();
 }

@@ -49,6 +49,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "win_local.h"
 #include "../../renderer/tr_local.h"
 
+#ifdef ID_ALLOW_TOOLS
+#include "tools/edit_public.h"
+#endif
+
 idCVar Win32Vars_t::sys_arch( "sys_arch", "", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar Win32Vars_t::sys_cpustring( "sys_cpustring", "detect", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar Win32Vars_t::in_mouse( "in_mouse", "1", CVAR_SYSTEM | CVAR_BOOL, "enable mouse input" );
@@ -58,7 +62,7 @@ idCVar Win32Vars_t::win_username( "win_username", "", CVAR_SYSTEM | CVAR_INIT, "
 idCVar Win32Vars_t::win_outputEditString( "win_outputEditString", "1", CVAR_SYSTEM | CVAR_BOOL, "" );
 idCVar Win32Vars_t::win_viewlog( "win_viewlog", "0", CVAR_SYSTEM | CVAR_INTEGER, "" );
 idCVar Win32Vars_t::win_timerUpdate( "win_timerUpdate", "0", CVAR_SYSTEM | CVAR_BOOL, "allows the game to be updated while dragging the window" );
-idCVar Win32Vars_t::win_allowMultipleInstances( "win_allowMultipleInstances", "0", CVAR_SYSTEM | CVAR_BOOL, "allow multiple instances running concurrently" );
+idCVar Win32Vars_t::win_allowMultipleInstances( "win_allowMultipleInstances", "1", CVAR_SYSTEM | CVAR_BOOL, "allow multiple instances running concurrently" );
 
 Win32Vars_t	win32;
 
@@ -67,6 +71,8 @@ static char		sys_cmdline[MAX_STRING_CHARS];
 static sysMemoryStats_t exeLaunchMemoryStats;
 
 static HANDLE hProcessMutex;
+
+bool enableToolsSupport = true;
 
 /*
 ================
@@ -317,6 +323,42 @@ void Sys_ReLaunch() {
 		return;
 	}
 	cmdSystem->AppendCommandText( "quit\n" );
+}
+
+// motorsep 12-28-2014; reverted back to the original Sys_ReLaunch; guys from RBDoom 3 BFG team made it impossible to pass any cmds on restart
+
+//void Sys_ReLaunch() {
+void Sys_ReLaunch(void * data, const unsigned int dataSize) {
+	TCHAR				szPathOrig[MAX_PRINT_MSG];
+	STARTUPINFO			si;
+	PROCESS_INFORMATION	pi;
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+
+	/*
+	// DG: we don't have function arguments in Sys_ReLaunch() anymore, everyone only passed
+	//     the command-line +" +set com_skipIntroVideos 1" anyway and it was painful on POSIX systems
+	//     so let's just add it here.
+	idStr cmdLine = Sys_GetCmdLine();
+	if( cmdLine.Find( "com_skipIntroVideos" ) < 0 )
+	{
+	cmdLine.Append( " +set com_skipIntroVideos 1" );
+	}
+
+	strcpy( szPathOrig, va( "\"%s\" %s", Sys_EXEPath(), cmdLine.c_str() ) );
+	// DG end
+	*/
+
+	strcpy(szPathOrig, va("\"%s\" %s", Sys_EXEPath(), (const char *)data));
+
+	CloseHandle(hProcessMutex);
+
+	if (!CreateProcess(NULL, szPathOrig, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		idLib::Error("Could not start process: '%s' ", szPathOrig);
+		return;
+	}
+	cmdSystem->AppendCommandText("quit\n");
 }
 
 /*
@@ -978,6 +1020,12 @@ This allows windows to be moved during renderbump
 void Sys_PumpEvents() {
     MSG msg;
 
+	// foresthale 2014-06-14: the gui editor has a race condition with the game event loop, so don't do anything
+	if (com_editors & EDITOR_GUI)
+	{
+		return;
+	}
+
 	// pump the message loop
 	while( PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE ) ) {
 		if ( !GetMessage( &msg, NULL, 0, 0 ) ) {
@@ -1559,6 +1607,55 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		// set exceptions, even if some crappy syscall changes them!
 		Sys_FPU_EnableExceptions( TEST_FPU_EXCEPTIONS );
+
+#ifdef ID_ALLOW_TOOLS
+		if (com_editors && enableToolsSupport) {
+			if (com_editors & EDITOR_GUI) {
+				// GUI editor
+				GUIEditorRun();
+			}
+			else if (com_editors & EDITOR_RADIANT) {
+				// Level Editor
+				RadiantRun();
+			}
+			else if (com_editors & EDITOR_MATERIAL) {
+				//BSM Nerve: Add support for the material editor
+				MaterialEditorRun();
+			}
+			else {
+				if (com_editors & EDITOR_LIGHT) {
+					// in-game Light Editor
+					LightEditorRun();
+				}
+				if (com_editors & EDITOR_SOUND) {
+					// in-game Sound Editor
+					SoundEditorRun();
+				}
+				if (com_editors & EDITOR_DECL) {
+					// in-game Declaration Browser
+					DeclBrowserRun();
+				}
+				if (com_editors & EDITOR_AF) {
+					// in-game Articulated Figure Editor
+					AFEditorRun();
+				}
+				if (com_editors & EDITOR_PARTICLE) {
+					// in-game Particle Editor
+					ParticleEditorRun();
+				}
+				if (com_editors & EDITOR_SCRIPT) {
+					// in-game Script Editor
+					ScriptEditorRun();
+				}
+				if (com_editors & EDITOR_PDA) {
+					// in-game PDA Editor
+					PDAEditorRun();
+				}
+			}
+		}
+#endif
+
+		//DebuggerClientUpdate();
 
 		// run the game
 		common->Frame();

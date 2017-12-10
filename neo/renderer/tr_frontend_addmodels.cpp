@@ -258,10 +258,11 @@ idRenderModel* R_EntityDefDynamicModel( idRenderEntityLocal* def )
 	// set model depth hack value
 	if( def->dynamicModel != NULL && model->DepthHack() != 0.0f && tr.viewDef != NULL )
 	{
-		idPlane eye, clip;
+		//ANON - Changed to the new rendermatrix code
+		idVec4 eye, clip;
 		idVec3 ndc;
-		R_TransformModelToClip( def->parms.origin, tr.viewDef->worldSpace.modelViewMatrix, tr.viewDef->projectionMatrix, eye, clip );
-		R_TransformClipToDevice( clip, ndc );
+		idRenderMatrix::TransformModelToClip(def->parms.origin, tr.viewDef->worldSpace.modelRenderViewMatrix, tr.viewDef->projectionRenderMatrix, eye, clip);
+		idRenderMatrix::TransformClipToDevice(clip, ndc);
 		def->parms.modelDepthHack = model->DepthHack() * ( 1.0f - ndc.z );
 	}
 	else
@@ -492,7 +493,7 @@ void R_AddSingleModel( viewEntity_t* vEntity )
 			}
 		}
 	}
-	
+
 	// if we aren't visible and none of the shadows stretch into the view,
 	// we don't need to do anything else
 	if( !modelIsVisible && numContactedLights == 0 )
@@ -967,7 +968,8 @@ void R_AddSingleModel( viewEntity_t* vEntity )
 			//--------------------------
 			
 #if 1
-			if( !shader->SurfaceCastsShadow() && !( r_useShadowMapping.GetBool() && r_forceShadowMapsOnAlphaTestedSurfaces.GetBool() && shader->Coverage() == MC_PERFORATED ) )
+			//if (!shader->SurfaceCastsShadow() && !(r_useShadowMapping.GetBool() && r_forceShadowMapsOnAlphaTestedSurfaces.GetBool() && shader->Coverage() == MC_PERFORATED))
+			if(!shader->SurfaceCastsShadow()) // From fhdoom 3 to help limit shadow map rendering
 			{
 				continue;
 			}

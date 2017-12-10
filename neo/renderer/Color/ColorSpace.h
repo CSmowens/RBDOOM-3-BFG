@@ -39,8 +39,11 @@ namespace idColorSpace
 void	ConvertRGBToYCoCg( byte* dst, const byte* src, int width, int height );
 void	ConvertYCoCgToRGB( byte* dst, const byte* src, int width, int height );
 
-void	ConvertRGBToCoCg_Y( byte* dst, const byte* src, int width, int height );
-void	ConvertCoCg_YToRGB( byte* dst, const byte* src, int width, int height );
+// foresthale 2014-05-21: we have to use the correct swizzle depending on which encoder will be called
+void	ConvertRGBToCoCg_Y_GIMPDDS(byte* dst, const byte* src, int width, int height);
+void	ConvertRGBToCoCg_Y_BFGDDS(byte* dst, const byte* src, int width, int height);
+void	ConvertCoCg_YToRGB_GIMPDDS(byte* dst, const byte* src, int width, int height);
+void	ConvertCoCg_YToRGB_BFGDDS(byte* dst, const byte* src, int width, int height);
 void	ConvertCoCgSYToRGB( byte* dst, const byte* src, int width, int height );
 
 void	ConvertRGBToYCoCg420( byte* dst, const byte* src, int width, int height );

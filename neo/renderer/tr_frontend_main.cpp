@@ -448,6 +448,24 @@ static void R_SetupSplitFrustums( viewDef_t* viewDef )
 }
 // RB end
 
+void R_SetupNewViewMatrix(viewDef_t* viewDef)
+{
+
+	viewEntity_t* world = &viewDef->worldSpace;
+	memset(world, 0, sizeof(*world));
+
+	// the model matrix is an identity
+	world->modelMatrix[0 * 4 + 0] = 1.0f;
+	world->modelMatrix[1 * 4 + 1] = 1.0f;
+	world->modelMatrix[2 * 4 + 2] = 1.0f;
+
+	// transform by the camera placement
+	const idVec3& origin = viewDef->renderView.vieworg;
+	const idMat3& axis = viewDef->renderView.viewaxis;
+
+	idRenderMatrix::CreateViewMatrix(origin, axis, world->modelRenderViewMatrix);
+}
+
 /*
 ================
 R_RenderView
@@ -467,7 +485,9 @@ void R_RenderView( viewDef_t* parms )
 	
 	// setup the matrix for world space to eye space
 	R_SetupViewMatrix( tr.viewDef );
-	
+
+	//R_SetupNewViewMatrix(tr.viewDef);
+
 	// we need to set the projection matrix before doing
 	// portal-to-screen scissor calculations
 	R_SetupProjectionMatrix( tr.viewDef );
@@ -479,9 +499,8 @@ void R_RenderView( viewDef_t* parms )
 	
 	// setup render matrices for faster culling
 	idRenderMatrix::Transpose( *( idRenderMatrix* )tr.viewDef->projectionMatrix, tr.viewDef->projectionRenderMatrix );
-	idRenderMatrix viewRenderMatrix;
-	idRenderMatrix::Transpose( *( idRenderMatrix* )tr.viewDef->worldSpace.modelViewMatrix, viewRenderMatrix );
-	idRenderMatrix::Multiply( tr.viewDef->projectionRenderMatrix, viewRenderMatrix, tr.viewDef->worldSpace.mvp );
+	idRenderMatrix::Transpose( *( idRenderMatrix* )tr.viewDef->worldSpace.modelViewMatrix, tr.viewDef->worldSpace.modelRenderViewMatrix);
+	idRenderMatrix::Multiply( tr.viewDef->projectionRenderMatrix, tr.viewDef->worldSpace.modelRenderViewMatrix, tr.viewDef->worldSpace.mvp );
 	
 	// the planes of the view frustum are needed for portal visibility culling
 	idRenderMatrix::GetFrustumPlanes( tr.viewDef->frustums[FRUSTUM_PRIMARY], tr.viewDef->worldSpace.mvp, false, true );
