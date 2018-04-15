@@ -1620,7 +1620,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			}
 			else if (com_editors & EDITOR_MATERIAL) {
 				//BSM Nerve: Add support for the material editor
-				MaterialEditorRun();
+				//ANON:Linking errors plus code isnt included
+				//MaterialEditorRun();
 			}
 			else {
 				if (com_editors & EDITOR_LIGHT) {

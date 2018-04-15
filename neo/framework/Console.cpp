@@ -956,7 +956,8 @@ void idConsoleLocal::Print( const char* txt )
 	RadiantPrint(txt);
 
 	if (com_editors & EDITOR_MATERIAL) {
-		MaterialEditorPrintConsole(txt);
+		//ANON:Linking errors plus code isnt included
+		//MaterialEditorPrintConsole(txt);
 	}
 #endif
 

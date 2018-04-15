@@ -2,8 +2,8 @@
 #define __WIN_NANOAFX_HPP__
 
 #define	_T(n)	L##n
-
-class CComBSTR : public _bstr_t
+//anon:causes errores
+/*class CComBSTR : public _bstr_t
 {
 public:
 	inline CComBSTR( const wchar_t* str ) : _bstr_t( str )
@@ -75,6 +75,6 @@ public:
 	{
 		return _ptr;
 	}
-};
+};*/
 
 #endif

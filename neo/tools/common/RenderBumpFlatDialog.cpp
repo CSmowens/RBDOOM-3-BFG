@@ -92,7 +92,8 @@ static BOOL CALLBACK RBFProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM l
 						rbfg_DefaultWidth.SetInteger( width );
 						rbfg_DefaultHeight.SetInteger( height );
 
-						Com_WriteConfigToFile( CONFIG_FILE );
+						//ANON:Linking errors plus code isnt included
+						//Com_WriteConfigToFile( CONFIG_FILE );
 
 						if (!CheckPow2(width) || !CheckPow2(height))
 						{

@@ -1,1 +1,0 @@
--fbx:atlas.fbx -outputdir:../CPRT/atlas/ 

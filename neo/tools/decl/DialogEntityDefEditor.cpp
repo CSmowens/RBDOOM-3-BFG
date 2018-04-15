@@ -25,7 +25,7 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
-
+//ANON: MISSING declarations
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 

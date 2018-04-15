@@ -547,7 +547,8 @@ Com_MaterialEditor_f
 static void Com_MaterialEditor_f(const idCmdArgs &args) {
 	// Turn off sounds
 	soundSystem->SetMute(true);
-	MaterialEditorInit();
+	//ANON:Linking errors plus code isnt included
+	//MaterialEditorInit();
 }
 #endif // ID_ALLOW_TOOLS
 

@@ -48,7 +48,26 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef _D3SDK
 #ifndef GAME_DLL
 
-//#define WINVER				0x501
+#define WINVER				0x501
+
+#if 0
+// Dedicated server hits unresolved when trying to link this way now. Likely because of the 2010/Win7 transition? - TTimo
+
+#ifdef	ID_DEDICATED
+// dedicated sets windows version here
+#define	_WIN32_WINNT WINVER
+#define	WIN32_LEAN_AND_MEAN
+#else
+// non-dedicated includes MFC and sets windows version here
+#include "../tools/comafx/StdAfx.h"			// this will go away when MFC goes away
+#endif
+
+#else
+
+#include "../tools/comafx/StdAfx.h"
+
+#endif
+
 
 #include <winsock2.h>
 #include <mmsystem.h>
