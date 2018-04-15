@@ -243,10 +243,10 @@ BOOL DialogAF::OnInitDialog()  {
 	SetTab( AFTAB_VIEW );
 
 	// create child dialog windows
-	//viewDlg = new DialogAFView( this );
-	//propertiesDlg = new DialogAFProperties( this );
-	//bodyDlg = new DialogAFBody( this );
-	//constraintDlg = new DialogAFConstraint( this );
+	viewDlg = new DialogAFView( this );
+	propertiesDlg = new DialogAFProperties( this );
+	bodyDlg = new DialogAFBody( this );
+	constraintDlg = new DialogAFConstraint( this );
 
 	// the body dialog may force the constraint dialog to reload the file
 	bodyDlg->constraintDlg = constraintDlg;
@@ -303,7 +303,7 @@ void AFEditorInit( const idDict *spawnArgs ) {
 
 	if ( g_AFDialog == NULL ) {
 		InitAfx();
-		//g_AFDialog = new DialogAF();
+		g_AFDialog = new DialogAF();
 	}
 
 	if ( g_AFDialog->GetSafeHwnd() == NULL) {
@@ -358,7 +358,7 @@ AFEditorShutdown
 ================
 */
 void AFEditorShutdown( void ) {
-	//delete g_AFDialog;
+	delete g_AFDialog;
 	g_AFDialog = NULL;
 }
 
