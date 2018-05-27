@@ -935,6 +935,8 @@ public:
 	idParallelJobList* 		frontEndJobList;
 	
 	unsigned				timerQueryId;		// for GL_TIME_ELAPSED_EXT queries
+	//anon
+	GLuint cullQuery[3];		// query object used for the culling
 };
 
 extern backEndState_t		backEnd;

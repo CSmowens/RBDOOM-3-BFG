@@ -153,6 +153,7 @@ enum renderParm_t
 	RENDERPARM_SHADOW_MATRIX_5_Z,
 	RENDERPARM_SHADOW_MATRIX_5_W,
 	// RB end
+	RENDERPARM_LASTMIPSIZE,
 	
 	RENDERPARM_TOTAL,
 	RENDERPARM_USER = 128,
@@ -186,9 +187,12 @@ public:
 	
 	int		FindVertexShader( const char* name );
 	int		FindFragmentShader( const char* name );
+	//ANON
+	int     FindGeometryShader(const char* name);
 	
 	// RB: added progIndex to handle many custom renderprogs
-	void	BindShader( int progIndex, int vIndex, int fIndex, bool builtin );
+	//ANON
+	void	BindShader( int progIndex, int vIndex, int fIndex, int gIndex, bool builtin );
 	// RB end
 	
 	void	BindShader_GUI( )
@@ -504,9 +508,15 @@ public:
 	}
 	
 #if 1
+	//ANON; GS and FS hiz map
 	void	BindShader_ZCullReconstruct()
 	{
 		BindShader_Builtin( BUILTIN_ZCULL_RECONSTRUCT );
+	}
+	//anon: actual culling code
+	void	BindShader_ZCull()
+	{
+		BindShader_Builtin(BUILTIN_ZCULL);
 	}
 #endif
 	
@@ -561,12 +571,14 @@ public:
 	}
 	void		SetUniformValue( const renderParm_t rp, const float* value );
 	void		CommitUniforms();
-	int			FindGLSLProgram( const char* name, int vIndex, int fIndex );
+	int			FindGLSLProgram( const char* name, int vIndex, int fIndex, int gIndex );
 	void		ZeroUniforms();
 	
 protected:
 	void	LoadVertexShader( int index );
 	void	LoadFragmentShader( int index );
+	//ANON
+	void    LoadGeometryShader( int index );
 	
 	enum
 	{
@@ -640,7 +652,10 @@ protected:
 		// RB end
 		BUILTIN_STEREO_DEGHOST,
 		BUILTIN_STEREO_WARP,
+		//ANON
 		BUILTIN_ZCULL_RECONSTRUCT,
+        //ANON
+		BUILTIN_ZCULL,
 		BUILTIN_BINK,
 		BUILTIN_BINK_GUI,
 		BUILTIN_STEREO_INTERLACE,
@@ -653,7 +668,7 @@ protected:
 	int builtinShaders[MAX_BUILTINS];
 	void BindShader_Builtin( int i )
 	{
-		BindShader( -1, builtinShaders[i], builtinShaders[i], true );
+		BindShader( -1, builtinShaders[i], builtinShaders[i], builtinShaders[i], true );
 	}
 	
 	enum shaderFeature_t
@@ -672,8 +687,10 @@ protected:
 	const char*	GetGLSLMacroName( shaderFeature_t sf ) const;
 	
 	bool	CompileGLSL( GLenum target, const char* name );
+	//anon
 	GLuint	LoadGLSLShader( GLenum target, const char* name, const char* nameOutSuffix, uint32 shaderFeatures, bool builtin, idList<int>& uniforms );
-	void	LoadGLSLProgram( const int programIndex, const int vertexShaderIndex, const int fragmentShaderIndex );
+	//ANON
+	void	LoadGLSLProgram(const int programIndex, const int vertexShaderIndex, const int fragmentShaderIndex, const int geometryShaderIndex);
 	
 	static const GLuint INVALID_PROGID = 0xFFFFFFFF;
 	
@@ -699,20 +716,35 @@ protected:
 		bool		builtin;
 		idList<int>	uniforms;
 	};
+	//anon
+	struct geometryShader_t
+	{
+		geometryShader_t() : progId(INVALID_PROGID), shaderFeatures(0), builtin(false) {}
+		idStr		name;
+		idStr		nameOutSuffix;
+		GLuint		progId;
+		uint32		shaderFeatures;
+		bool		builtin;
+		idList<int>	uniforms;
+	};
 	
 	struct glslProgram_t
 	{
 		glslProgram_t() :	progId( INVALID_PROGID ),
 			vertexShaderIndex( -1 ),
 			fragmentShaderIndex( -1 ),
+			geometryShaderIndex( -1 ),
 			vertexUniformArray( -1 ),
-			fragmentUniformArray( -1 ) {}
+			fragmentUniformArray( -1 ),
+		    geometryUniformArray( -1 )  {}
 		idStr		name;
 		GLuint		progId;
 		int			vertexShaderIndex;
 		int			fragmentShaderIndex;
+		int         geometryShaderIndex;
 		GLint		vertexUniformArray;
 		GLint		fragmentUniformArray;
+		GLint       geometryUniformArray;
 		idList<glslUniformLocation_t> uniformLocations;
 	};
 	int	currentRenderProgram;
@@ -722,8 +754,12 @@ protected:
 	
 	int				currentVertexShader;
 	int				currentFragmentShader;
+	//anon
+	int             currentGeometryShader;
 	idList<vertexShader_t, TAG_RENDER> vertexShaders;
 	idList<fragmentShader_t, TAG_RENDER> fragmentShaders;
+    //Anon
+	idList<geometryShader_t, TAG_RENDER> geometryShaders;
 };
 
 extern idRenderProgManager renderProgManager;

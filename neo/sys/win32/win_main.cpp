@@ -1020,6 +1020,7 @@ This allows windows to be moved during renderbump
 void Sys_PumpEvents() {
     MSG msg;
 
+	//ANON - Added back...
 	// foresthale 2014-06-14: the gui editor has a race condition with the game event loop, so don't do anything
 	if (com_editors & EDITOR_GUI)
 	{
@@ -1621,7 +1622,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			else if (com_editors & EDITOR_MATERIAL) {
 				//BSM Nerve: Add support for the material editor
 				//ANON:Linking errors plus code isnt included
-				//MaterialEditorRun();
+				MaterialEditorRun();
 			}
 			else {
 				if (com_editors & EDITOR_LIGHT) {

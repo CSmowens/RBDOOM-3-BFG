@@ -38,7 +38,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "DialogAFProperties.h"
 #include "DialogAFBody.h"
 #include "DialogAFConstraint.h"
-#include "../../idlib/heap.h"
 // DialogAF
 
 #define AFTAB_VIEW				0x01

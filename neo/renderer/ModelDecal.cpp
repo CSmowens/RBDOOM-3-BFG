@@ -181,7 +181,7 @@ idRenderModelDecal::GlobalProjectionParmsToLocal
 */
 void idRenderModelDecal::GlobalProjectionParmsToLocal( decalProjectionParms_t& localParms, const decalProjectionParms_t& globalParms, const idVec3& origin, const idMat3& axis )
 {
-	//ANON updated decals to work wih rendermatrix
+	//ANON: updated decals to work wih rendermatrix
 	//float modelMatrix[16];
 	
 	//R_AxisToModelMatrix( axis, origin, modelMatrix );
@@ -206,6 +206,7 @@ void idRenderModelDecal::GlobalProjectionParmsToLocal( decalProjectionParms_t& l
 	R_GlobalPlaneToLocal( modelMatrix, globalParms.textureAxis[0], localParms.textureAxis[0] );
 	R_GlobalPlaneToLocal( modelMatrix, globalParms.textureAxis[1], localParms.textureAxis[1] );
 	R_GlobalPointToLocal( modelMatrix, globalParms.projectionOrigin, localParms.projectionOrigin );*/
+	//ANON end
 	localParms.projectionBounds = globalParms.projectionBounds;
 	localParms.projectionBounds.TranslateSelf( -origin );
 	localParms.projectionBounds.RotateSelf( axis.Transpose() );

@@ -48,25 +48,34 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef _D3SDK
 #ifndef GAME_DLL
 
-#define WINVER				0x501
 
-#if 0
-// Dedicated server hits unresolved when trying to link this way now. Likely because of the 2010/Win7 transition? - TTimo
+//-----------------------------------------------------
 
-#ifdef	ID_DEDICATED
-// dedicated sets windows version here
-#define	_WIN32_WINNT WINVER
-#define	WIN32_LEAN_AND_MEAN
-#else
-// non-dedicated includes MFC and sets windows version here
-#include "../tools/comafx/StdAfx.h"			// this will go away when MFC goes away
+#ifdef _WIN32
+
+// don't define ID_ALLOW_TOOLS when we don't want tool code in the executable.
+#if !defined( ID_DEDICATED ) && defined(USE_MFC_TOOLS)
+
+#define	ID_ALLOW_TOOLS
+#define WINVER				0x601
+#ifdef _MSC_VER 
+#pragma warning( disable: 4005 )  /* macro redefinition */
 #endif
+#include <afxwin.h>
+#include <afxcmn.h>
+#include <afxdlgs.h>
+#include <afxext.h>
 
-#else
-
+#ifdef _MSC_VER 
+#pragma warning( default: 4005 )  /* macro redefinition */
+#pragma warning( default: 4996 )  /* directx macro redefinition */
+#endif
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// prevent auto literal to string conversion
 #include "../tools/comafx/StdAfx.h"
 
-#endif
+#endif // ID_DEDICATED
+
+#endif /* _WIN32 */
 
 
 #include <winsock2.h>

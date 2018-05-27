@@ -190,6 +190,18 @@ void Framebuffer::Init()
 		globalFramebuffers.csDepthFBO[i]->AttachImage2D( GL_TEXTURE_2D, globalImages->hierarchicalZbufferImage, 0, i );
 		globalFramebuffers.csDepthFBO[i]->Check();
 	}
+
+	int numLevels = 1 + (int)idMath::Floor(idMath::Log(fmaxf(glConfig.nativeScreenWidth, glConfig.nativeScreenHeight)));
+	//for (int i = 0; i < numLevels; i++)
+	{
+		globalFramebuffers.hizFBO = new Framebuffer("_HIZ", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight);
+		globalFramebuffers.hizFBO->Bind();
+		//globalFramebuffers.hizFBO[i]->AddColorBuffer(GL_R32F, 0);
+	//	globalFramebuffers.hizFBO[i]->AttachImage2D(GL_TEXTURE_2D, globalImages->hierarchicalZbufferImage, 0, 0);
+		//globalFramebuffers.hizFBO[i]->AttachImageDepthLayer(globalImages->hierarchicalZbufferImage, i);
+		//globalFramebuffers.hizFBO[i]->Check();
+
+	}
 	
 	// GEOMETRY BUFFER
 	
@@ -302,6 +314,17 @@ void Framebuffer::CheckFramebuffers()
 			globalFramebuffers.csDepthFBO[i]->Check();
 		}
 		
+
+		/*int numLevels = 1 + (int)idMath::Floor(idMath::Log(fmaxf(glConfig.nativeScreenWidth, glConfig.nativeScreenHeight)));
+		for (int i = 0; i < numLevels; i++)
+		{
+			globalFramebuffers.hizFBO[i] = new Framebuffer("_HIZ", glConfig.nativeScreenWidth, glConfig.nativeScreenHeight);
+			globalFramebuffers.hizFBO[i]->Bind();
+			globalFramebuffers.hizFBO[i]->AttachImage2D(GL_TEXTURE_2D, globalImages->hierarchicalZbufferImage, 0);
+			globalFramebuffers.hizFBO[i]->AttachImageDepthLayer(globalImages->hierarchicalZbufferImage, i);
+			globalFramebuffers.hizFBO[i]->Check();
+		}*/
+
 		// GEOMETRY BUFFER
 		
 		globalImages->currentNormalsImage->Resize( glConfig.nativeScreenWidth, glConfig.nativeScreenHeight );

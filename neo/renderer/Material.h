@@ -210,6 +210,9 @@ typedef struct
 	int					glslProgram;
 	int					numFragmentProgramImages;
 	idImage* 			fragmentProgramImages[MAX_FRAGMENT_IMAGES];
+
+	//anon
+	int                 geometryProgram;
 } newShaderStage_t;
 
 typedef struct

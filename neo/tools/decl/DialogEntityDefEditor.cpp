@@ -26,7 +26,7 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 //ANON: MISSING declarations
-#include "../../idlib/precompiled.h"
+//#include "../../idlib/precompiled.h"
 #pragma hdrstop
 
 #include "../../sys/win32/rc/Common_resource.h"

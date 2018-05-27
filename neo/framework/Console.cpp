@@ -952,14 +952,15 @@ void idConsoleLocal::Print( const char* txt )
 	int		c, l;
 	int		color;
 	
+	//ANON 
 #ifdef ID_ALLOW_TOOLS
 	RadiantPrint(txt);
 
 	if (com_editors & EDITOR_MATERIAL) {
-		//ANON:Linking errors plus code isnt included
-		//MaterialEditorPrintConsole(txt);
+		MaterialEditorPrintConsole(txt);
 	}
 #endif
+	//ANON
 
 	if( TOTAL_LINES == 0 )
 	{

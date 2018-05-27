@@ -86,7 +86,8 @@ class idParallelJobList
 	friend class idParallelJobManagerLocal;
 public:
 
-	void					AddJob( jobRun_t function, void* data );
+	//ANON:AddJob to Add_Job
+	void					Add_Job( jobRun_t function, void* data );
 	CellSpursJob128* 		AddJobSPURS();
 	void					InsertSyncPoint( jobSyncType_t syncType );
 	

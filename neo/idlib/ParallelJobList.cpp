@@ -186,7 +186,8 @@ public:
 	//------------------------
 	// These are called from the one thread that manages this list.
 	//------------------------
-	ID_INLINE void			AddJob( jobRun_t function, void* data );
+	//ANON:AddJob to Add_Job
+	ID_INLINE void			Add_Job( jobRun_t function, void* data );
 	ID_INLINE void			InsertSyncPoint( jobSyncType_t syncType );
 	void					Submit( idParallelJobList_Threads* waitForJobList_, int parallelism );
 	void					Wait();
@@ -340,7 +341,8 @@ idParallelJobList_Threads::~idParallelJobList_Threads()
 idParallelJobList_Threads::AddJob
 ========================
 */
-ID_INLINE void idParallelJobList_Threads::AddJob( jobRun_t function, void* data )
+//ANON:AddJob to Add_Job
+ID_INLINE void idParallelJobList_Threads::Add_Job( jobRun_t function, void* data )
 {
 	assert( done );
 #if defined( _DEBUG )
@@ -854,10 +856,11 @@ idParallelJobList::~idParallelJobList()
 idParallelJobList::AddJob
 ========================
 */
-void idParallelJobList::AddJob( jobRun_t function, void* data )
+//ANON:AddJob to Add_Job
+void idParallelJobList::Add_Job( jobRun_t function, void* data )
 {
 	assert( IsRegisteredJob( function ) );
-	jobListThreads->AddJob( function, data );
+	jobListThreads->Add_Job( function, data );
 }
 
 /*

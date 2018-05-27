@@ -173,11 +173,16 @@ GL_StartDepthPass
 */
 void GL_StartDepthPass( const idScreenRect& rect )
 {
-	/*backEnd.currentScissor = rect;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	backEnd.currentScissor = rect;
+	GL_Scissor(backEnd.viewDef->viewport.x1 + backEnd.currentScissor.x1,
+		backEnd.viewDef->viewport.y1 + backEnd.currentScissor.y1,
+		backEnd.currentScissor.x2 + 1 - backEnd.currentScissor.x1,
+		backEnd.currentScissor.y2 + 1 - backEnd.currentScissor.y1);
 	glEnable(GL_DEPTH_TEST);  // We want depth test !
 	glDepthFunc(GL_LESS);     // We want to get the nearest pixels
 	GL_Color(0, 0, 0, 0);     // Disable color, it's useless, we only want depth.
-	glDepthMask(GL_TRUE);*/     // Ask z writing
+	glDepthMask(GL_TRUE);    // Ask z writing
 }
 
 /*
@@ -187,10 +192,10 @@ GL_FinishDepthPass
 */
 void GL_FinishDepthPass()
 {
-	/*glEnable(GL_DEPTH_TEST);  // We still want depth test
+	glEnable(GL_DEPTH_TEST);  // We still want depth test
 	glDepthFunc(GL_LEQUAL);   // EQUAL should work, too. (Only draw pixels if they are the closest ones)
 	GL_Color(1, 1, 1, 1);     // We want color this time
-	glDepthMask(GL_FALSE); */   // Writing the z component is useless now, we already have it
+	glDepthMask(GL_FALSE);    // Writing the z component is useless now, we already have it
 }
 
 /*

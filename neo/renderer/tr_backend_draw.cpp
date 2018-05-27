@@ -42,6 +42,7 @@ idCVar r_skipShaderPasses( "r_skipShaderPasses", "0", CVAR_RENDERER | CVAR_BOOL,
 idCVar r_skipInteractionFastPath( "r_skipInteractionFastPath", "1", CVAR_RENDERER | CVAR_BOOL, "" );
 idCVar r_useLightStencilSelect( "r_useLightStencilSelect", "0", CVAR_RENDERER | CVAR_BOOL, "use stencil select pass" );
 idCVar r_shadowMapMaxDistance("r_shadowMapMaxDistance", "2900", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "objects past this distance won't cast shadows");
+idCVar r_useHIZ("r_useHIZ", "0", CVAR_RENDERER | CVAR_BOOL, "objects cull depth past this distance");
 extern idCVar stereoRender_swapEyes;
 
 backEndState_t	backEnd;
@@ -3733,7 +3734,8 @@ static int RB_DrawShaderPasses( const drawSurf_t* const* const drawSurfs, const 
 				
 				// RB: CRITICAL BUGFIX: changed newStage->glslProgram to vertexProgram and fragmentProgram
 				// otherwise it will result in an out of bounds crash in RB_DrawElementsWithCounters
-				renderProgManager.BindShader( newStage->glslProgram, newStage->vertexProgram, newStage->fragmentProgram, false );
+				//ANON
+				renderProgManager.BindShader( newStage->glslProgram, newStage->vertexProgram, newStage->fragmentProgram, newStage->geometryProgram, false );
 				// RB end
 				
 				for( int j = 0; j < newStage->numVertexParms; j++ )
@@ -5321,12 +5323,12 @@ void RB_DrawViewInternal( const viewDef_t* viewDef, const int stereoEye )
 		R_MatrixTranspose( backEnd.viewDef->projectionMatrix, projMatrixTranspose );
 		SetVertexParms( RENDERPARM_PROJMATRIX_X, projMatrixTranspose, 4 );
 	}
-	
+
 	//-------------------------------------------------
 	// fill the depth buffer and clear color buffer to black except on subviews
 	//-------------------------------------------------
 	RB_FillDepthBufferFast( drawSurfs, numDrawSurfs );
-	
+
 	//-------------------------------------------------
 	// FIXME, OPTIMIZE: merge this with FillDepthBufferFast like in a light prepass deferred renderer
 	//
@@ -5499,7 +5501,7 @@ void RB_DrawViewInternal( const viewDef_t* viewDef, const int stereoEye )
 	
 	RB_Bloom( viewDef );
 	// RB end
-	
+
 	renderLog.CloseBlock();
 }
 

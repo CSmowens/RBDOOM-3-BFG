@@ -1983,13 +1983,13 @@ void R_OrderIndexes(int numIndexes, triIndex_t *indexes) {
 	}
 
 	// save off the original indexes
-	oldIndexes = (triIndex_t *)_alloca(numIndexes * sizeof(*oldIndexes));
+	oldIndexes = (triIndex_t *)Mem_Alloc(numIndexes * sizeof(*oldIndexes), TAG_NEW);
 	memcpy(oldIndexes, indexes, numIndexes * sizeof(*oldIndexes));
 	numOldIndexes = numIndexes;
 
 	// make a table to mark the triangles when they are emited
 	numTris = numIndexes / 3;
-	triangleUsed = (bool *)_alloca(numTris * sizeof(*triangleUsed));
+	triangleUsed = (bool *)Mem_Alloc(numTris * sizeof(*triangleUsed), TAG_NEW);
 	memset(triangleUsed, 0, numTris * sizeof(*triangleUsed));
 
 	// find the highest vertex number
@@ -2002,10 +2002,10 @@ void R_OrderIndexes(int numIndexes, triIndex_t *indexes) {
 	numVerts++;
 
 	// create a table of triangles used by each vertex
-	vrefs = (vertRef_t **)_alloca(numVerts * sizeof(*vrefs));
+	vrefs = (vertRef_t **)Mem_Alloc(numVerts * sizeof(*vrefs), TAG_NEW);
 	memset(vrefs, 0, numVerts * sizeof(*vrefs));
 
-	vrefTable = (vertRef_t *)_alloca(numIndexes * sizeof(*vrefTable));
+	vrefTable = (vertRef_t *)Mem_Alloc(numIndexes * sizeof(*vrefTable), TAG_NEW);
 	for (i = 0; i < numIndexes; i++) {
 		tri = i / 3;
 

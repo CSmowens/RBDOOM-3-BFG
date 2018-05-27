@@ -73,8 +73,10 @@ MaterialDefList MaterialDefManager::materialDefs[MaterialDefManager::MATERIAL_DE
 * and groups the definitions.
 */
 void MaterialDefManager::InitializeMaterialDefLists() {
-	
-	char	*buffer;
+
+	//ANON: this cuases the material editor to fail
+	//but the editor works without it
+/*	char	*buffer;
 	int length = fileSystem->ReadFile( MATERIAL_DEF_FILE, (void **)&buffer);
 
 	if ( length == -1 ) {
@@ -93,7 +95,7 @@ void MaterialDefManager::InitializeMaterialDefLists() {
 	InitializeMaterialDefList(&src, "stageprops", &materialDefs[MATERIAL_DEF_STAGE]);
 	InitializeMaterialDefList(&src, "specialmapstageprops", &materialDefs[MATERIAL_DEF_SPECIAL_STAGE]);
 
-	fileSystem->FreeFile(buffer);
+	fileSystem->FreeFile(buffer);*/
 }
 
 /**
